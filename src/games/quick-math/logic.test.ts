@@ -56,3 +56,8 @@ it('toScore pins the difficulty/accuracy/speed curve', () => {
   expect(toScore({ difficultyReached: 1, accuracy: 0.5, avgMs: 4000 })).toBe(19)
   expect(toScore({ difficultyReached: 1, accuracy: 0, avgMs: 8000 })).toBe(6)
 })
+
+it('gives no speed credit for zero-answer runs (idle exploit guard)', () => {
+  expect(toScore({ difficultyReached: 10, accuracy: 0, avgMs: 0 })).toBe(60) // difficulty only
+  expect(toScore({ difficultyReached: 1, accuracy: 0, avgMs: 0 })).toBe(6)
+})

@@ -59,10 +59,13 @@ function makeChoices(answer: number, rng: () => number): number[] {
   return arr
 }
 
-/** Session score 0–100: 60% difficulty, 25% accuracy, 15% speed (≤1s full, ≥4s none). */
+/**
+ * Session score 0–100: 60% difficulty, 25% accuracy, 15% speed (≤1s full, ≥4s none).
+ * avgMs = 0 is the zero-answers sentinel — no speed credit for idle runs.
+ */
 export function toScore(r: { difficultyReached: number; accuracy: number; avgMs: number }): number {
   const difficulty = Math.min(10, r.difficultyReached) / 10
-  const speed = Math.max(0, Math.min(1, (4000 - r.avgMs) / 3000))
+  const speed = r.avgMs > 0 ? Math.max(0, Math.min(1, (4000 - r.avgMs) / 3000)) : 0
   const raw = difficulty * 60 + r.accuracy * 25 + speed * 15
   return Math.round(Math.max(0, Math.min(100, raw)))
 }
