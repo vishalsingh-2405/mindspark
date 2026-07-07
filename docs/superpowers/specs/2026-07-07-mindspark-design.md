@@ -19,7 +19,7 @@ daily vocabulary flashcard system, feeding one unified **Brain Score** with leve
 | Persistence | IndexedDB via Dexie; no accounts, no backend |
 | Repo | Publish-ready structure, git from day one, CI (lint + test + build) |
 
-**Out of scope for v1:** AI top-up, accounts/cloud sync, leaderboards, streak freezes, i18n.
+**Out of scope for v1:** AI top-up, accounts/cloud sync, leaderboards, i18n.
 All are additive later; nothing in v1's architecture blocks them.
 
 ## Stack
@@ -105,15 +105,21 @@ Play again / Next game).
 5. **Adaptive difficulty:** per-game persisted level; in-run, ~3 consecutive correct →
    step up, ~2 consecutive misses → step down; next session starts one notch below last
    peak.
-6. **Streak:** a day counts when any game or the daily deck is completed; miss a day →
-   reset (no freezes in v1).
+6. **Streak:** a day counts when any game or the daily deck is completed.
+7. **Streak freezes:** every 50 consecutive days (day 50, 100, 150…) earns 1 freeze,
+   stacking up to a max of 2. Missing a day with a freeze available auto-consumes it and
+   the streak survives (the frozen day shows a ❄️ in streak history and does not
+   increment the counter). One freeze covers one missed day — two consecutive missed
+   days need two freezes. No freezes left → streak resets to zero. Freeze count shows
+   as a small ❄️ badge next to the streak flame on Home.
 
 ## Data model (Dexie / IndexedDB)
 
 ```
 sessions       { id, gameId, skill, score, difficultyReached, accuracy, avgMs, playedAt }
 vocabProgress  { wordId, interval, ease, due, lapses, lastResult }   // only seen words
-profile        { brainScore, skillScores{5}, streak, bestStreak, lastPlayedDate }
+profile        { brainScore, skillScores{5}, streak, bestStreak, lastPlayedDate,
+                 freezesAvailable, lastFreezeMilestone, frozenDates[] }
 settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
 ```
 
