@@ -114,3 +114,38 @@ a.neon-btn { text-decoration: none; }
 .results__score { font-size: 56px; font-weight: 800; color: var(--cyan); text-shadow: var(--glow-cyan); }
 .results__delta { color: var(--muted); font-size: 14px; }
 .results__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+/* Word Vault flip card */
+.flip-card {
+  background: transparent; border: none; padding: 0; width: 100%;
+  perspective: 900px; cursor: pointer; min-height: 280px;
+}
+.flip-card__inner {
+  position: relative; width: 100%; min-height: 280px;
+  transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0.1, 0.2, 1);
+}
+.flip-card.is-flipped .flip-card__inner { transform: rotateY(180deg); }
+.flip-card__face {
+  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-align: center;
+  background: var(--panel-glass); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.flip-card__face--front { border: 1px solid var(--border-cyan-strong); box-shadow: var(--glow-cyan); }
+.flip-card__face--back { border: 1px solid rgba(255, 46, 151, 0.4); box-shadow: var(--glow-magenta); transform: rotateY(180deg); }
+.flip-card__word { font-size: 30px; font-weight: 800; letter-spacing: 1px; text-shadow: var(--glow-cyan); text-transform: uppercase; }
+.flip-card__word--small { font-size: 18px; }
+.flip-card__pos { color: var(--cyan); font-style: italic; font-size: 13px; }
+.flip-card__meaning { font-size: 16px; line-height: 1.5; color: var(--text); }
+.flip-card__example { font-size: 13px; line-height: 1.5; color: var(--muted); font-style: italic; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; }
+.flip-card__hint { color: var(--muted); font-size: 11px; margin-top: 12px; }
+
+/* Vocab screen */
+.vocab__grade { display: flex; gap: 12px; }
+.vocab__grade .neon-btn { flex: 1; }
+.vocab__meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+.vocab__mode { display: flex; background: var(--panel); border: 1px solid var(--border-cyan-weak); border-radius: 20px; padding: 3px; font-size: 12px; }
+.vocab__mode button { flex: 1; background: none; border: none; border-radius: 16px; padding: 6px 0; color: var(--muted); }
+.vocab__mode button.is-on { background: rgba(0, 240, 255, 0.13); color: var(--cyan); font-weight: 700; }
+.vocab__progress { height: 4px; background: var(--panel); border-radius: 2px; overflow: hidden; }
+.vocab__progress span { display: block; height: 100%; background: var(--cyan); box-shadow: var(--glow-cyan); transition: width 0.3s ease; }
