@@ -11,15 +11,16 @@ export function AppShell() {
   const init = useAppStore(s => s.init)
   const storageOk = useAppStore(s => s.storageOk)
   const { pathname } = useLocation()
-  const inGame = pathname.startsWith('/play')
+  const inGame = pathname === '/play' || pathname.startsWith('/play/')
 
   useEffect(() => { void init() }, [init])
 
   return (
     <div className="app">
-      {!storageOk && <div className="banner">Storage unavailable — progress won't be saved</div>}
+      {!storageOk && <div className="banner" role="status">Storage unavailable — progress won't be saved</div>}
       <main className="app__main">
-        <ErrorBoundary>
+        {/* key: remount on navigation so a crashed screen's fallback clears when the user switches tabs */}
+        <ErrorBoundary key={pathname}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/games" element={<Games />} />
