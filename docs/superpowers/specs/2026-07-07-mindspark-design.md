@@ -142,8 +142,12 @@ settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
 in-memory index; zero network after first load.
 
 **Daily deck:** `wordsPerDay` (default 10, settable 5–25) new words in frequency order
-+ all reviews due today, shuffled, reviews first-weighted. Finishing the deck banks the
-streak day.
++ reviews due today — reviews come strictly first (resolved reading of "first-weighted",
+Anki-style), **capped at 50 reviews per deck keeping the most overdue** so a returning
+user never faces an unbounded wall to keep their streak (decided 2026-07-07). Finishing
+the deck banks the streak day. Deck score: 70% accuracy + 30% review retention, with
+the retention share count-weighted (ramps in over 5 reviews) so a lone review card
+cannot swing the score.
 
 **Flashcards:** tap-to-flip (3D flip, validated via mockup). Two modes, toggleable:
 Word → Meaning and Meaning → Word (meaning side shows pos + first-letter hint).
