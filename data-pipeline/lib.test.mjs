@@ -1,4 +1,4 @@
-import { isCleanWord, tierForRank, parseGloss, buildEntries } from './lib.mjs'
+import { isCleanWord, tierForRank, parseGloss, buildEntries, parseIndexLine, isObjectionableGloss } from './lib.mjs'
 
 it('accepts lowercase alphabetic words of 3-14 chars only', () => {
   expect(isCleanWord('ephemeral')).toBe(true)
@@ -28,6 +28,30 @@ it('splits a WordNet gloss into meaning and example', () => {
     meaning: 'a coarse term for defecation',
     example: '',
   })
+})
+
+it('parses real WordNet index lines: lemma, tagsense count, first (primary-sense) offset', () => {
+  // verbatim from wordnet-db index.verb: p_cnt=5, so tagsense_cnt is field 10, first offset field 11
+  expect(parseIndexLine('know v 11 5 ! @ ~ $ + 11 7 00596016 00597330 00597025 00595732 00598039 00594278 00597527 01429048 00610224 00610056 00609926  ')).toEqual({
+    lemma: 'know',
+    tagCnt: 7,
+    firstOffset: '00596016',
+  })
+  // verbatim from wordnet-db index.noun: p_cnt=4, tagsense_cnt 0
+  expect(parseIndexLine('gorge n 3 4 @ ~ #p %p 3 0 09313350 09286818 05541581  ')).toEqual({
+    lemma: 'gorge',
+    tagCnt: 0,
+    firstOffset: '09313350',
+  })
+  // license-header lines start with whitespace; blanks are null too
+  expect(parseIndexLine('  1 This software and database is being provided to you, the LICENSEE, by  ')).toBe(null)
+  expect(parseIndexLine('')).toBe(null)
+})
+
+it('flags obscene/slur glosses and passes clean ones', () => {
+  expect(isObjectionableGloss('(ethnic slur) offensive term for a person of Mexican descent')).toBe(true)
+  expect(isObjectionableGloss('obscene terms for penis')).toBe(true)
+  expect(isObjectionableGloss('a deep ravine (usually with a river running through it)')).toBe(false)
 })
 
 it('handles real WordNet gloss shapes: multi-example, attribution, trailing punctuation, parenthetical quote', () => {

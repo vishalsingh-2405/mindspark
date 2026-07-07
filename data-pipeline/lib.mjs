@@ -14,6 +14,25 @@ export function tierForRank(rank) {
   return null
 }
 
+/** Parse a WordNet index.<pos> line → { lemma, tagCnt, firstOffset }, or null for header/blank lines. */
+export function parseIndexLine(line) {
+  if (!line || line.startsWith(' ')) return null
+  const f = line.trim().split(/\s+/)
+  const pCnt = parseInt(f[3], 10)
+  if (!Number.isFinite(pCnt)) return null
+  const tagCnt = parseInt(f[5 + pCnt], 10)
+  const firstOffset = f[6 + pCnt]
+  if (!firstOffset) return null
+  return { lemma: f[0], tagCnt, firstOffset }
+}
+
+const OBJECTIONABLE = /obscene|vulgar|ethnic slur|offensive term|disparaging|derogatory term|expletive/i
+
+/** Family-safety gate: does this raw WordNet gloss mark the sense as obscene/slur? */
+export function isObjectionableGloss(gloss) {
+  return OBJECTIONABLE.test(gloss)
+}
+
 function trimMeaning(s) {
   return s.trim().replace(/[;:,(]\s*$/, '').trim()
 }
