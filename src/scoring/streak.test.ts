@@ -1,4 +1,5 @@
 import { advanceStreak, type StreakState } from './streak'
+import { addDays } from '../lib/dates'
 
 const base: StreakState = {
   streak: 0,
@@ -75,4 +76,44 @@ it('milestone is not re-awarded for the same threshold', () => {
   let s: StreakState = { ...base, streak: 50, lastPlayedDate: '2026-07-07', freezesAvailable: 1, lastFreezeMilestone: 50 }
   s = advanceStreak(s, '2026-07-08') // day 51
   expect(s.freezesAvailable).toBe(1)
+})
+
+it('a play dated before the last played day is a no-op (clock rollback safety)', () => {
+  const s: StreakState = { ...base, streak: 10, bestStreak: 10, lastPlayedDate: '2026-07-07' }
+  const after = advanceStreak(s, '2026-07-06')
+  expect(after).toEqual(s)
+})
+
+it('milestone earned on a freeze-survival day: consumed and re-earned', () => {
+  let s: StreakState = { ...base, streak: 49, lastPlayedDate: '2026-07-07', freezesAvailable: 1 }
+  s = advanceStreak(s, '2026-07-09') // missed the 8th, freeze consumed, streak hits 50
+  expect(s.streak).toBe(50)
+  expect(s.freezesAvailable).toBe(1) // 1 consumed, 1 earned at the 50 milestone
+  expect(s.lastFreezeMilestone).toBe(50)
+  expect(s.frozenDates).toEqual(['2026-07-08'])
+})
+
+it('reset then rebuild to 50 re-awards a freeze', () => {
+  let s: StreakState = { ...base, streak: 60, lastPlayedDate: '2026-01-01', freezesAvailable: 0, lastFreezeMilestone: 50 }
+  s = advanceStreak(s, '2026-02-01') // long gap, reset to 1, milestone zeroed
+  expect(s.streak).toBe(1)
+  let day = '2026-02-01'
+  for (let i = 0; i < 49; i++) { day = addDays(day, 1); s = advanceStreak(s, day) }
+  expect(s.streak).toBe(50)
+  expect(s.freezesAvailable).toBe(1)
+})
+
+it('banked freezes survive a streak reset (product decision: keep)', () => {
+  const s: StreakState = { ...base, streak: 60, lastPlayedDate: '2026-07-07', freezesAvailable: 2, lastFreezeMilestone: 50 }
+  const after = advanceStreak(s, '2026-08-15')
+  expect(after.streak).toBe(1)
+  expect(after.freezesAvailable).toBe(2)
+  expect(after.lastFreezeMilestone).toBe(0)
+})
+
+it('does not mutate its input state', () => {
+  const s: StreakState = { ...base, streak: 10, lastPlayedDate: '2026-07-07', freezesAvailable: 1 }
+  const snapshot = structuredClone(s)
+  advanceStreak(s, '2026-07-09')
+  expect(s).toEqual(snapshot)
 })

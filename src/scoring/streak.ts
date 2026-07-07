@@ -1,12 +1,12 @@
 import { addDays, daysBetween } from '../lib/dates'
 
 export interface StreakState {
-  streak: number
-  bestStreak: number
-  lastPlayedDate: string | null // 'YYYY-MM-DD'
-  freezesAvailable: number
-  lastFreezeMilestone: number
-  frozenDates: string[]
+  readonly streak: number
+  readonly bestStreak: number
+  readonly lastPlayedDate: string | null // 'YYYY-MM-DD'
+  readonly freezesAvailable: number
+  readonly lastFreezeMilestone: number
+  readonly frozenDates: readonly string[]
 }
 
 export const FREEZE_EVERY = 50
@@ -20,8 +20,10 @@ export function advanceStreak(s: StreakState, today: string): StreakState {
   if (s.lastPlayedDate === null) {
     next = { ...s, streak: 1, lastPlayedDate: today }
   } else {
-    const missed = daysBetween(s.lastPlayedDate, today) - 1
-    if (missed <= 0) {
+    const delta = daysBetween(s.lastPlayedDate, today)
+    if (delta <= 0) return s // past day (clock rollback): no-op, never regress lastPlayedDate
+    const missed = delta - 1
+    if (missed === 0) {
       next = { ...s, streak: s.streak + 1, lastPlayedDate: today }
     } else if (missed <= s.freezesAvailable) {
       const frozen = Array.from({ length: missed }, (_, i) => addDays(s.lastPlayedDate!, i + 1))
@@ -33,6 +35,9 @@ export function advanceStreak(s: StreakState, today: string): StreakState {
         lastPlayedDate: today,
       }
     } else {
+      // Streak dies; banked freezes are kept (product decision 2026-07-07):
+      // freezes are earned inventory and survive resets. frozenDates is
+      // permanent ❄️ history for the streak calendar.
       next = { ...s, streak: 1, lastFreezeMilestone: 0, lastPlayedDate: today }
     }
   }
