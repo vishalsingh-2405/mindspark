@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ComingSoon } from './screens/ComingSoon'
+import { GamePlay } from './screens/GamePlay'
 import { Games } from './screens/Games'
 import { Home } from './screens/Home'
 import { useAppStore } from './state/store'
@@ -24,6 +25,7 @@ export function AppShell() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/games" element={<Games />} />
+            <Route path="/play/:gameId" element={<GamePlay />} />
             <Route path="/vocab" element={<ComingSoon title="WORD VAULT" />} />
             <Route path="/stats" element={<ComingSoon title="STATS" />} />
           </Routes>
