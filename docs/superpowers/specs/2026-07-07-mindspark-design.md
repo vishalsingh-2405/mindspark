@@ -139,7 +139,9 @@ settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
    2026-07-07). Obscenity filtering is three layers: LDNOOBW blocklist + a curated
    supplemental list + an automatic gate dropping any entry whose gloss carries
    obscenity/slur markers; dropped words backfill from the frequency list so the bank
-   stays at 15k.
+   stays at 15k. Accuracy outranks count (user decision 2026-07-07): if quality
+   filtering (abbreviations, junk lemmas) shrinks the bank, ~14k accurate words is
+   preferred over backfilling to 15k with filler; hard floor stays 12k.
 3. Tier by frequency: **Everyday** (top ~3k) · **Intermediate** (~5k) · **Advanced** (rest).
 4. Emit `public/data/vocab/{everyday,intermediate,advanced}.json`, entries
    `{ id, word, pos, meaning, example }`. Words without a WordNet example keep
