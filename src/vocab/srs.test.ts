@@ -29,7 +29,7 @@ it('successive "knew" climbs the ease-scaled ladder', () => {
     gaps.push(intervalDays(p))
     day = p.due
   }
-  expect(gaps).toEqual([1, 4, 11, 29, 72]) // ladder scaled by growing ease — VERIFY AND PIN ACTUALS
+  expect(gaps).toEqual([1, 4, 11, 29, 72]) // ladder scaled by growing ease
 })
 
 it('"did not know" resets to 1 day, drops ease a notch, counts a lapse', () => {
@@ -56,4 +56,14 @@ it('low ease shrinks intervals, high ease stretches them', () => {
 it('mastered means top of the ladder', () => {
   expect(isMastered(seen({ step: 4 }))).toBe(true)
   expect(isMastered(seen({ step: 3 }))).toBe(false)
+})
+
+it('a mastered word keeps its cadence on further success (step stays 4)', () => {
+  const p = gradeWord(seen({ step: 4, ease: 3.0 }), true, '2026-07-07')
+  expect(p.step).toBe(4)
+  expect(intervalDays(p)).toBe(72)
+})
+
+it('intervalDays on a never-graded row clamps to the first rung', () => {
+  expect(intervalDays(seen())).toBe(1) // step -1 sentinel
 })

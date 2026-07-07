@@ -15,10 +15,11 @@ export function newProgress(wordId: string, today: string): VocabProgressRow {
 
 /** Interval in days for the current step, scaled by ease (2.5 = unscaled). */
 export function intervalDays(p: VocabProgressRow): number {
-  const base = LADDER[Math.max(0, Math.min(4, p.step))]
+  const base = LADDER[Math.max(0, Math.min(LADDER.length - 1, p.step))]
   return Math.max(1, Math.round(base * p.ease / EASE_START))
 }
 
+/** Mastered = climbed the full ladder (step 4). Deliberate step-based reading (not interval≥60): five consecutive successes demonstrates mastery even at low ease — decided 2026-07-07. */
 export function isMastered(p: VocabProgressRow): boolean {
   return p.step >= LADDER.length - 1
 }
