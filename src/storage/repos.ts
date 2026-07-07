@@ -8,7 +8,11 @@ export { DEFAULT_PROFILE, DEFAULT_SETTINGS }
 
 export async function loadProfile(): Promise<ProfileRow> {
   const row = await db.profile.get('profile')
-  if (row) return { ...structuredClone(DEFAULT_PROFILE), ...row, vocabTier: row.vocabTier ?? 'everyday' }
+  if (row) {
+    const merged = { ...structuredClone(DEFAULT_PROFILE), ...row, vocabTier: row.vocabTier ?? 'everyday' }
+    if (row.vocabTier == null) await db.profile.put(merged)
+    return merged
+  }
   await db.profile.put(DEFAULT_PROFILE)
   return structuredClone(DEFAULT_PROFILE)
 }
@@ -62,7 +66,7 @@ export async function dueReviews(today: string): Promise<VocabProgressRow[]> {
 }
 
 export async function seenWordIds(): Promise<string[]> {
-  return (await db.vocabProgress.toArray()).map(p => p.wordId)
+  return db.vocabProgress.toCollection().primaryKeys()
 }
 
 export async function getDeckRow(day: string): Promise<VocabDeckRow | undefined> {

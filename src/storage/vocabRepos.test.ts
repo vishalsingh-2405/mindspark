@@ -31,3 +31,27 @@ it('round-trips the daily deck row', async () => {
   await saveDeckRow({ day: '2026-07-07', cards: [{ wordId: 'a', isReview: false }], index: 1, knownNew: 1, knownReviews: 0, completed: true })
   expect((await getDeckRow('2026-07-07'))?.completed).toBe(true)
 })
+
+it('upgrades a genuine v1 database preserving all rows', async () => {
+  await db.delete()
+  // build a real v1 database with a plain Dexie instance
+  const { default: Dexie } = await import('dexie')
+  const v1 = new Dexie('mindspark')
+  v1.version(1).stores({
+    sessions: '++id, gameId, skill, playedAt',
+    profile: 'id',
+    settings: 'id',
+    gameLevels: 'gameId',
+  })
+  await v1.open()
+  await v1.table('sessions').add({ gameId: 'quick-math', skill: 'math', score: 70, difficultyReached: 4, accuracy: 0.9, avgMs: 1200, playedAt: '2026-07-07T10:00:00Z' })
+  await v1.table('profile').put({ id: 'profile', brainScore: 70, skillScores: { math: 70 }, streak: 3, bestStreak: 3, lastPlayedDate: '2026-07-07', freezesAvailable: 0, lastFreezeMilestone: 0, frozenDates: [] })
+  v1.close()
+  // reopen with the v2 class
+  await db.open()
+  expect(db.verno).toBe(2)
+  expect(await db.sessions.count()).toBe(1)
+  expect((await loadProfile()).vocabTier).toBe('everyday') // backfill on legacy row
+  await saveVocabProgress({ wordId: 'x', step: 0, ease: 2.5, due: '2026-07-08', lapses: 0, lastResult: 'knew', seenAt: '2026-07-07' })
+  expect((await dueReviews('2026-07-08'))).toHaveLength(1)
+})
