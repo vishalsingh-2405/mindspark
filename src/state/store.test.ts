@@ -1,10 +1,15 @@
 import { db } from '../storage/db'
+import { DEFAULT_PROFILE } from '../storage/repos'
 import { useAppStore } from './store'
 
 beforeEach(async () => {
   await db.delete()
   await db.open()
   useAppStore.setState({ profile: null, settings: null, storageOk: true })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 it('init loads default profile and settings', async () => {
@@ -40,4 +45,26 @@ it('updateSettings merges and persists', async () => {
   await useAppStore.getState().updateSettings({ soundOn: false })
   expect(useAppStore.getState().settings?.soundOn).toBe(false)
   expect((await db.settings.get('settings'))?.soundOn).toBe(false)
+})
+
+it('init falls back to in-memory defaults when storage fails', async () => {
+  vi.spyOn(db.profile, 'get').mockRejectedValueOnce(new Error('idb unavailable'))
+  await useAppStore.getState().init()
+  expect(useAppStore.getState().storageOk).toBe(false)
+  expect(useAppStore.getState().profile?.streak).toBe(0)
+})
+
+it('recordSession skips persistence when storage is down', async () => {
+  useAppStore.setState({ profile: structuredClone(DEFAULT_PROFILE), settings: null, storageOk: false })
+  await useAppStore.getState().recordSession({ gameId: 'quick-math', skill: 'math', score: 80, difficultyReached: 5, accuracy: 0.9, avgMs: 1500 })
+  expect(useAppStore.getState().profile?.skillScores.math).toBe(80)
+  expect(await db.sessions.count()).toBe(0)
+})
+
+it('a mid-run write failure resolves gracefully and flips storageOk', async () => {
+  await useAppStore.getState().init()
+  vi.spyOn(db.sessions, 'add').mockRejectedValueOnce(new Error('quota exceeded'))
+  await expect(useAppStore.getState().recordSession({ gameId: 'quick-math', skill: 'math', score: 80, difficultyReached: 5, accuracy: 0.9, avgMs: 1500 })).resolves.toBeUndefined()
+  expect(useAppStore.getState().storageOk).toBe(false)
+  expect(useAppStore.getState().profile?.skillScores.math).toBe(80) // optimistic state kept
 })

@@ -32,12 +32,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   async recordSession(result) {
-    const prev = get().profile ?? structuredClone(repo.DEFAULT_PROFILE)
+    if (!get().profile) await get().init() // init guarantees a non-null profile afterward
+    const prev = get().profile!
+    const now = new Date()
     const skillScores = {
       ...prev.skillScores,
       [result.skill]: updateSkillScore(prev.skillScores[result.skill] ?? null, result.score),
     }
-    const streaked = advanceStreak(prev, toDayString(new Date()))
+    const streaked = advanceStreak(prev, toDayString(now))
+    // skillScores/brainScore must stay AFTER ...streaked — streaked structurally carries stale copies.
     const profile: ProfileRow = {
       ...prev,
       ...streaked,
@@ -46,14 +49,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     set({ profile })
     if (get().storageOk) {
-      await repo.addSession({ ...result, playedAt: new Date().toISOString() })
-      await repo.saveProfile(profile)
+      try {
+        await repo.addSession({ ...result, playedAt: now.toISOString() })
+        await repo.saveProfile(profile)
+      } catch {
+        set({ storageOk: false })
+      }
     }
   },
 
   async updateSettings(patch) {
-    const settings: SettingsRow = { ...(get().settings ?? structuredClone(repo.DEFAULT_SETTINGS)), ...patch }
+    if (!get().settings) await get().init() // init guarantees non-null settings afterward
+    const settings: SettingsRow = { ...get().settings!, ...patch }
     set({ settings })
-    if (get().storageOk) await repo.saveSettings(settings)
+    if (get().storageOk) {
+      try {
+        await repo.saveSettings(settings)
+      } catch {
+        set({ storageOk: false })
+      }
+    }
   },
 }))
