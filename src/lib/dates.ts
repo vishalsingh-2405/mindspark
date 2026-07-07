@@ -11,11 +11,18 @@ function toUTC(day: string): number {
   return Date.UTC(y, m - 1, d)
 }
 
-/** Whole days from day `a` to day `b` (positive when b is later). */
+/**
+ * Whole days from day `a` to day `b` (positive when b is later).
+ * Input must be a well-formed 'YYYY-MM-DD' string.
+ */
 export function daysBetween(a: string, b: string): number {
   return Math.round((toUTC(b) - toUTC(a)) / 86_400_000)
 }
 
+/**
+ * Adds `n` days (may be negative) to a day string.
+ * Input must be a well-formed 'YYYY-MM-DD' string.
+ */
 export function addDays(day: string, n: number): string {
   const t = new Date(toUTC(day) + n * 86_400_000)
   const m = String(t.getUTCMonth() + 1).padStart(2, '0')
