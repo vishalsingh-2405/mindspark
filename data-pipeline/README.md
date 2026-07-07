@@ -11,7 +11,7 @@ pipeline or upgrading a data source.
 npm run build:vocab
 ```
 
-The first run downloads the ~50 MB frequency list to `data-pipeline/cache/`
+The first run downloads the ~19 MB frequency list to `data-pipeline/cache/`
 (gitignored); subsequent runs reuse the cache. Delete the cache file to force a
 fresh download. WordNet data comes from the installed `wordnet-db` package, so
 no other network access is needed.
@@ -21,11 +21,19 @@ no other network access is needed.
 1. Words are taken in descending frequency order from the frequency list,
    deduplicated.
 2. Each word must be clean (lowercase alphabetic, 3–14 chars — this drops
-   multiword lemmas, punctuation, and proper nouns), absent from the profanity
-   blocklist, and have a WordNet definition. WordNet lemmas are matched
-   case-sensitively, so capitalized proper-noun senses (Paris, John) never
-   supply definitions.
-3. The first 15,000 accepted words are tiered by acceptance rank:
+   multiword lemmas, punctuation, and proper nouns), pass the obscenity
+   filters (below), and resolve to a WordNet primary-sense definition.
+3. **Primary-sense selection.** WordNet index files list each lemma's senses
+   in frequency order (semantic concordance), so the definition shipped is the
+   FIRST sense (sense 1) of the chosen part of speech. The POS is chosen by
+   highest `tagsense_cnt` across index.noun/verb/adj/adv; ties (including
+   0-vs-0) fall back to noun → verb → adjective → adverb priority. Index
+   lemmas are lowercased by WordNet, so the resolved data line must contain
+   the lemma verbatim (case-sensitive) among its raw synset words — this keeps
+   proper-noun senses (Paris, John) from supplying definitions. Words failing
+   that check are dropped (no fallback to sense 2) and the frequency walk
+   backfills from further down the list.
+4. The first 15,000 accepted words are tiered by acceptance rank:
 
    | Tier         | Rank range      | Count |
    | ------------ | --------------- | ----- |
@@ -38,6 +46,19 @@ no other network access is needed.
 
 Each shard entry is `{ id, word, pos, meaning, example }`; `example` may be an
 empty string (the UI hides the row — see docs/superpowers decision log).
+
+## Obscenity filtering (three layers)
+
+1. **LDNOOBW word blocklist** — the `naughty-words` English list.
+2. **Supplemental word blocklist** — `SUPPLEMENTAL_BLOCKLIST` in
+   `build-vocab.mjs`: words whose primary sense leaked past LDNOOBW in an
+   audited build (arse, fucker, wop, squaw, …) plus preventive entries.
+   Known-innocent homographs (censor, curse, tart, fairy, cracker, …) are
+   deliberately NOT word-blocked — their clean primary senses may ship.
+3. **Gloss gate** — `isObjectionableGloss` in `lib.mjs` drops any word whose
+   primary-sense gloss is marked obscene/vulgar/ethnic slur/offensive/
+   disparaging/derogatory/expletive, so slur senses never ship even for words
+   absent from both blocklists.
 
 ## Data sources and licenses
 

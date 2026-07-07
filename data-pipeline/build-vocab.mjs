@@ -2,7 +2,7 @@ import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } 
 import { createInterface } from 'node:readline'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { buildEntries, isCleanWord, parseGloss } from './lib.mjs'
+import { buildEntries, isCleanWord, isObjectionableGloss, parseGloss, parseIndexLine } from './lib.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const CACHE = join(here, 'cache')
@@ -29,43 +29,97 @@ async function loadFrequencyList() {
   return words
 }
 
-// 2. WordNet definitions from the wordnet-db package's data files
+// 2. WordNet primary-sense definitions from the wordnet-db package.
+// Index files list a lemma's senses in frequency order (semantic concordance),
+// so the FIRST offset is the primary sense. POS is chosen by highest
+// tagsense_cnt; ties (including 0-vs-0) keep the earlier POS in
+// noun → verb → adjective → adverb priority order.
 async function loadDefinitions() {
   const { path: wnPath } = await import('wordnet-db').then(m => m.default ?? m)
-  const posFiles = [
-    ['data.noun', 'noun'],
-    ['data.verb', 'verb'],
-    ['data.adj', 'adjective'],
-    ['data.adv', 'adverb'],
+  const POS = [
+    ['noun', 'index.noun', 'data.noun'],
+    ['verb', 'index.verb', 'data.verb'],
+    ['adjective', 'index.adj', 'data.adj'],
+    ['adverb', 'index.adv', 'data.adv'],
   ]
-  const defs = new Map()
-  for (const [file, pos] of posFiles) {
-    const rl = createInterface({ input: createReadStream(join(wnPath, file)) })
+
+  // 2a. Per lemma: pick the POS with the highest tagsense_cnt (ties → earlier POS).
+  const candidates = new Map() // lemma → { pos, tagCnt, firstOffset }
+  for (const [pos, indexFile] of POS) {
+    const rl = createInterface({ input: createReadStream(join(wnPath, indexFile)) })
+    for await (const line of rl) {
+      const parsed = parseIndexLine(line)
+      if (!parsed || !isCleanWord(parsed.lemma)) continue
+      const prev = candidates.get(parsed.lemma)
+      if (prev && prev.tagCnt >= parsed.tagCnt) continue
+      candidates.set(parsed.lemma, { pos, tagCnt: parsed.tagCnt, firstOffset: parsed.firstOffset })
+    }
+  }
+
+  // 2b. Collect only the data lines the candidates point at.
+  const needed = new Map(POS.map(([pos]) => [pos, new Set()]))
+  for (const c of candidates.values()) needed.get(c.pos).add(c.firstOffset)
+  const dataLines = new Map(POS.map(([pos]) => [pos, new Map()]))
+  for (const [pos, , dataFile] of POS) {
+    const want = needed.get(pos)
+    const keep = dataLines.get(pos)
+    const rl = createInterface({ input: createReadStream(join(wnPath, dataFile)) })
     for await (const line of rl) {
       if (line.startsWith(' ')) continue // license header
-      const bar = line.indexOf('|')
-      if (bar === -1) continue
-      const gloss = line.slice(bar + 1).trim()
-      const fields = line.slice(0, bar).trim().split(' ')
-      const wordCount = parseInt(fields[3], 16)
-      for (let i = 0; i < wordCount; i++) {
-        // Filter on the RAW lemma: WordNet capitalizes proper nouns (Paris, John),
-        // and isCleanWord rejects uppercase — lowercasing first would let city/person
-        // glosses masquerade as common-word definitions.
-        const word = fields[4 + i * 2]
-        if (!word || !isCleanWord(word) || defs.has(word)) continue
-        const { meaning, example } = parseGloss(gloss)
-        if (meaning) defs.set(word, { pos, meaning, example })
-      }
+      const offset = line.slice(0, line.indexOf(' '))
+      if (want.has(offset)) keep.set(offset, line)
     }
+  }
+
+  // 2c. Resolve each candidate to its primary-sense gloss.
+  const defs = new Map()
+  for (const [lemma, { pos, firstOffset }] of candidates) {
+    const line = dataLines.get(pos).get(firstOffset)
+    if (!line) continue
+    const bar = line.indexOf('|')
+    if (bar === -1) continue
+    // Index lemmas are LOWERCASED by WordNet; require the lemma verbatim
+    // (case-sensitive) among the raw synset words so proper-noun senses
+    // (Paris, John) never supply definitions. No fallback to sense 2 —
+    // dropped words are backfilled from further down the frequency list.
+    const fields = line.slice(0, bar).trim().split(' ')
+    const wordCount = parseInt(fields[3], 16)
+    let verbatim = false
+    for (let i = 0; i < wordCount; i++) {
+      if (fields[4 + i * 2] === lemma) { verbatim = true; break }
+    }
+    if (!verbatim) continue
+    const gloss = line.slice(bar + 1).trim()
+    if (isObjectionableGloss(gloss)) continue // family-safety gate: drop the word
+    const { meaning, example } = parseGloss(gloss)
+    if (meaning) defs.set(lemma, { pos, meaning, example })
   }
   return defs
 }
 
-// 3. Blocklist
+// Words whose primary sense slipped past LDNOOBW in the audited build, plus
+// cheap preventive insurance. Known-innocent homographs (censor, curse, tart,
+// fairy, …) deliberately stay OFF this list — the gloss gate handles senses.
+const SUPPLEMENTAL_BLOCKLIST = [
+  // leaked past LDNOOBW in the audited build
+  'aphrodisiac','arse','arsehole','beaver','booby','broad','brothel','bugger','cocksucker','condom',
+  'crap','crapper','crappy','cripple','crotch','cuss','dickhead','dumbass','dyke','erection',
+  'fanny','fart','farting','floozy','fucker','genitalia','gimp','goddam','goddamn','goddamned',
+  'gook','gringo','harlot','homo','honky','horseshit','hump','hussy','hymie','knob',
+  'midget','molest','molester','muff','nance','pansy','pecker','pervert','perverted','piss',
+  'pissed','poop','pornographic','prostitute','prostitution','putz','queer','randy','raped','retard',
+  'retarded','schmuck','screw','screwing','scrotum','shag','shite','sissy','skank','slag',
+  'sperm','squaw','stripper','striptease','testicle','turd','wanker','wop',
+  // preventive (not currently shipped, cheap insurance)
+  'boner','dago','dildo','gyp','gypped','heeb','hooker','horny','incest','injun',
+  'jigaboo','mick','mongoloid','mulatto','paedophile','pedophile','pickaninny','rape','rapist','raping',
+  'redskin','sambo','slut','spaz','spic','strumpet','tit','trollop','twat','whore','whorish','yid',
+]
+
+// 3. Blocklist: LDNOOBW + supplemental
 async function loadBlocklist() {
   const naughty = await import('naughty-words').then(m => m.default ?? m)
-  return new Set(naughty.en)
+  return new Set([...naughty.en, ...SUPPLEMENTAL_BLOCKLIST])
 }
 
 const [freq, defs, blocklist] = await Promise.all([loadFrequencyList(), loadDefinitions(), loadBlocklist()])
