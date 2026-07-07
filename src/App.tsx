@@ -1,3 +1,10 @@
+import { BrowserRouter } from 'react-router-dom'
+import { AppShell } from './AppShell'
+
 export default function App() {
-  return <h1>MindSpark</h1>
+  return (
+    <BrowserRouter>
+      <AppShell />
+    </BrowserRouter>
+  )
 }
