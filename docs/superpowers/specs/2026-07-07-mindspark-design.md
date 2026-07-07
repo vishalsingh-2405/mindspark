@@ -150,8 +150,12 @@ Word → Meaning and Meaning → Word (meaning side shows pos + first-letter hin
 After flip: **✕ Didn't know / ✓ Knew it**.
 
 **SRS (SM-2 lite):** Didn't know → interval 1 day, ease down. Knew it → interval grows
-1 → 4 → 10 → 25 → 60 days, scaled by ease. Interval ≥ 60 days = mastered. Mastery drives
-the vocab skill score; mastering ~80% of served tier words unlocks the next tier.
+1 → 4 → 10 → 25 → 60 days, scaled by ease. Mastered = climbed the full ladder (step 4,
+i.e. five consecutive successes — deliberate step-based reading, decided 2026-07-07).
+Mastery drives tier promotion (~80% of ≥50 served tier words unlocks the next tier);
+the vocab skill score comes from deck sessions (70% accuracy + 30% review retention)
+through the standard EWMA. Known future wart: an always-missed word resurfaces daily
+forever (lapses are recorded but unused) — Anki-style leech handling is deferred.
 
 ## Screens
 
