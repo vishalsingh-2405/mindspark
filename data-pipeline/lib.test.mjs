@@ -30,6 +30,41 @@ it('splits a WordNet gloss into meaning and example', () => {
   })
 })
 
+it('handles real WordNet gloss shapes: multi-example, attribution, trailing punctuation, parenthetical quote', () => {
+  // first example wins
+  expect(parseGloss('cause to run; "run the water"; "run the machine"')).toEqual({
+    meaning: 'cause to run',
+    example: 'run the water',
+  })
+  // attribution tail after the quote is dropped
+  expect(parseGloss('lasting a very short time; "the ephemeral joys"- John Milton')).toEqual({
+    meaning: 'lasting a very short time',
+    example: 'the ephemeral joys',
+  })
+  // trailing colon before a word-mention quote is stripped
+  expect(parseGloss('female of domestic cattle: "moo-cow" is a child\'s term')).toEqual({
+    meaning: 'female of domestic cattle',
+    example: 'moo-cow',
+  })
+  // quote inside a parenthetical: meaning must not end mid-paren
+  expect(parseGloss('spread by scattering ("straw" is archaic); "strew toys all over the carpet"')).toEqual({
+    meaning: 'spread by scattering',
+    example: 'straw',
+  })
+})
+
+it('stops accepting entries at exactly limit', () => {
+  const freq = ['aaa', 'bbb', 'ccc']
+  const defs = new Map([
+    ['aaa', { pos: 'noun', meaning: 'first', example: '' }],
+    ['bbb', { pos: 'noun', meaning: 'second', example: '' }],
+    ['ccc', { pos: 'noun', meaning: 'third', example: '' }],
+  ])
+  const entries = buildEntries(freq, defs, new Set(), 2)
+  expect(entries).toHaveLength(2)
+  expect(entries[1]).toMatchObject({ word: 'bbb', rank: 1 })
+})
+
 it('builds tiered entries: frequency-ranked, defined, clean, blocklist-filtered', () => {
   const freq = ['the', 'time', 'shit', 'ephemeral', 'zzzz', 'ox']
   const defs = new Map([

@@ -14,11 +14,15 @@ export function tierForRank(rank) {
   return null
 }
 
+function trimMeaning(s) {
+  return s.trim().replace(/[;:,(]\s*$/, '').trim()
+}
+
 /** WordNet gloss: definition, optionally followed by quoted example sentences. */
 export function parseGloss(gloss) {
   const quote = gloss.indexOf('"')
-  if (quote === -1) return { meaning: gloss.trim().replace(/;\s*$/, ''), example: '' }
-  const meaning = gloss.slice(0, quote).trim().replace(/;\s*$/, '')
+  if (quote === -1) return { meaning: trimMeaning(gloss), example: '' }
+  const meaning = trimMeaning(gloss.slice(0, quote))
   const example = (gloss.slice(quote).match(/"([^"]+)"/)?.[1] ?? '').trim()
   return { meaning, example }
 }
@@ -28,6 +32,7 @@ export function parseGloss(gloss) {
  * defs: Map word → { pos, meaning, example }.
  * blocklist: Set of excluded words.
  * Returns entries with tier + rank, capped at `limit` accepted words.
+ * Callers must keep limit <= 15000 or tier becomes null (tierForRank ceiling).
  */
 export function buildEntries(freqWords, defs, blocklist, limit) {
   const entries = []
@@ -37,7 +42,7 @@ export function buildEntries(freqWords, defs, blocklist, limit) {
     const def = defs.get(word)
     if (!def || !def.meaning) continue
     const rank = entries.length
-    entries.push({ id: word, word, pos: def.pos, meaning: def.meaning, example: def.example, tier: tierForRank(rank), rank })
+    entries.push({ id: word, word, pos: def.pos, meaning: def.meaning, example: def.example ?? '', tier: tierForRank(rank), rank })
   }
   return entries
 }
