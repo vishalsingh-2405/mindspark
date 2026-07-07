@@ -23,6 +23,11 @@ export class ErrorBoundary extends Component<Props, State> {
           <button type="button" className="neon-btn neon-btn--cyan" onClick={() => this.setState({ error: null })}>
             Try again
           </button>
+          {/* Nav is hidden on /play — a deterministic crash needs an escape besides "Try again".
+              Plain anchor: a full reload is fine (arguably desirable) after a crash. */}
+          <a className="neon-btn neon-btn--lime" href="/" style={{ marginLeft: 10, display: 'inline-block' }}>
+            Home
+          </a>
         </div>
       )
     }

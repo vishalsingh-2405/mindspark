@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { ResultsCard } from '../components/ResultsCard'
 import { getGame } from '../games/registry'
@@ -13,20 +13,25 @@ export function GamePlay() {
   const [startLevel, setStartLevel] = useState<number | null>(null)
   const [outcome, setOutcome] = useState<{ score: number; delta: number | null } | null>(null)
   const [runKey, setRunKey] = useState(0)
+  const finishedRef = useRef(false)
 
   useEffect(() => {
     if (!game) return
     let cancelled = false
-    void getGameLevel(game.id).then(peak => {
-      if (!cancelled) setStartLevel(Math.max(1, peak - 1))
-    })
+    void getGameLevel(game.id).then(
+      peak => { if (!cancelled) setStartLevel(Math.max(1, peak - 1)) },
+      () => { if (!cancelled) setStartLevel(1) }, // storage down — start fresh at level 1
+    )
     return () => { cancelled = true }
   }, [game, runKey])
 
   async function handleFinish(result: GameResult) {
-    const last = await lastSessionFor(result.gameId)
-    await recordSession(result)
-    await setGameLevel(result.gameId, result.difficultyReached)
+    if (finishedRef.current) return
+    finishedRef.current = true
+    // Every step tolerates storage failure — the ResultsCard must always appear.
+    const last = await lastSessionFor(result.gameId).catch(() => undefined)
+    await recordSession(result) // resolves even on storage failure, by design
+    await setGameLevel(result.gameId, result.difficultyReached).catch(() => {})
     setOutcome({ score: result.score, delta: last ? result.score - last.score : null })
   }
 
@@ -39,6 +44,7 @@ export function GamePlay() {
         score={outcome.score}
         delta={outcome.delta}
         onReplay={() => {
+          finishedRef.current = false
           setOutcome(null)
           setStartLevel(null)
           setRunKey(k => k + 1)

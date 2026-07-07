@@ -16,9 +16,11 @@ export function ResultsCard({ score, delta, onReplay }: Props) {
       <div className="results__delta">
         {delta === null
           ? 'First run — baseline set'
-          : delta >= 0
-            ? `▲ +${delta} vs last time`
-            : `▼ ${delta} vs last time`}
+          : delta === 0
+            ? '— same as last time'
+            : delta > 0
+              ? `▲ +${delta} vs last time`
+              : `▼ ${delta} vs last time`}
       </div>
       <div className="results__actions">
         <NeonButton onClick={onReplay}>Play again</NeonButton>

@@ -14,6 +14,7 @@ export interface GameResult {
 export interface GameProps {
   /** Starting difficulty level for this run (1–10). */
   difficulty: number
+  /** Called at most once per run, when the run ends. Games must guard against double-fire (doneRef pattern). */
   onFinish: (result: GameResult) => void
 }
 
