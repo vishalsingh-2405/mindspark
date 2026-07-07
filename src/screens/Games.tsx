@@ -1,3 +1,43 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { games } from '../games/registry'
+import { bestScoreFor, lastSessionFor } from '../storage/repos'
+
+interface GameStats { best?: number; last?: number }
+
 export function Games() {
-  return <div className="screen"><h1 className="app-title">GAMES</h1></div>
+  const [stats, setStats] = useState<Record<string, GameStats>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const entries = await Promise.all(
+        games.map(async g => {
+          const [best, last] = await Promise.all([bestScoreFor(g.id), lastSessionFor(g.id)])
+          return [g.id, { best, last: last?.score }] as const
+        }),
+      )
+      if (!cancelled) setStats(Object.fromEntries(entries))
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <div className="screen">
+      <h1 className="app-title">GAMES</h1>
+      <div className="home__tiles" data-testid="games-grid">
+        {games.map(g => (
+          <Link className="tile" key={g.id} to={`/play/${g.id}`}>
+            <span>{g.name}</span>
+            <small>{g.skill}</small>
+            <small>
+              {stats[g.id]?.best != null
+                ? `Best ${stats[g.id].best} · Last ${stats[g.id].last}`
+                : 'Not played yet'}
+            </small>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
 }
