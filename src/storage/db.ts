@@ -22,6 +22,30 @@ export interface ProfileRow {
   freezesAvailable: number
   lastFreezeMilestone: number
   frozenDates: readonly string[]
+  vocabTier: VocabTier
+}
+
+export type VocabTier = 'everyday' | 'intermediate' | 'advanced'
+
+export interface VocabProgressRow {
+  wordId: string
+  step: number          // 0..4 index into the SRS ladder; -1 never graded
+  ease: number          // 1.3..3.0, starts 2.5
+  due: string           // 'YYYY-MM-DD'
+  lapses: number
+  lastResult: 'knew' | 'missed' | null
+  seenAt: string        // day first seen
+}
+
+export interface DeckCard { wordId: string; isReview: boolean }
+
+export interface VocabDeckRow {
+  day: string           // 'YYYY-MM-DD' primary key
+  cards: DeckCard[]
+  index: number         // next card to show
+  knownNew: number
+  knownReviews: number
+  completed: boolean
 }
 
 export interface SettingsRow {
@@ -47,6 +71,7 @@ export const DEFAULT_PROFILE: ProfileRow = Object.freeze({
   freezesAvailable: 0,
   lastFreezeMilestone: 0,
   frozenDates: [],
+  vocabTier: 'everyday',
 })
 
 export const DEFAULT_SETTINGS: SettingsRow = Object.freeze({
@@ -62,6 +87,8 @@ export class MindSparkDB extends Dexie {
   profile!: Table<ProfileRow, string>
   settings!: Table<SettingsRow, string>
   gameLevels!: Table<GameLevelRow, string>
+  vocabProgress!: Table<VocabProgressRow, string>
+  vocabDeck!: Table<VocabDeckRow, string>
 
   constructor() {
     super('mindspark')
@@ -70,6 +97,14 @@ export class MindSparkDB extends Dexie {
       profile: 'id',
       settings: 'id',
       gameLevels: 'gameId',
+    })
+    this.version(2).stores({
+      sessions: '++id, gameId, skill, playedAt',
+      profile: 'id',
+      settings: 'id',
+      gameLevels: 'gameId',
+      vocabProgress: 'wordId, due',
+      vocabDeck: 'day',
     })
   }
 }

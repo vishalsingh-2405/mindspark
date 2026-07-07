@@ -1,13 +1,14 @@
 import {
   db, DEFAULT_PROFILE, DEFAULT_SETTINGS,
   type ProfileRow, type SessionRow, type SettingsRow,
+  type VocabProgressRow, type VocabDeckRow,
 } from './db'
 
 export { DEFAULT_PROFILE, DEFAULT_SETTINGS }
 
 export async function loadProfile(): Promise<ProfileRow> {
   const row = await db.profile.get('profile')
-  if (row) return row
+  if (row) return { ...structuredClone(DEFAULT_PROFILE), ...row, vocabTier: row.vocabTier ?? 'everyday' }
   await db.profile.put(DEFAULT_PROFILE)
   return structuredClone(DEFAULT_PROFILE)
 }
@@ -46,4 +47,28 @@ export async function getGameLevel(gameId: string): Promise<number> {
 
 export async function setGameLevel(gameId: string, lastPeak: number): Promise<void> {
   await db.gameLevels.put({ gameId, lastPeak })
+}
+
+export async function saveVocabProgress(p: VocabProgressRow): Promise<void> {
+  await db.vocabProgress.put(p)
+}
+
+export async function getVocabProgress(wordId: string): Promise<VocabProgressRow | undefined> {
+  return db.vocabProgress.get(wordId)
+}
+
+export async function dueReviews(today: string): Promise<VocabProgressRow[]> {
+  return db.vocabProgress.where('due').belowOrEqual(today).toArray()
+}
+
+export async function seenWordIds(): Promise<string[]> {
+  return (await db.vocabProgress.toArray()).map(p => p.wordId)
+}
+
+export async function getDeckRow(day: string): Promise<VocabDeckRow | undefined> {
+  return db.vocabDeck.get(day)
+}
+
+export async function saveDeckRow(row: VocabDeckRow): Promise<void> {
+  await db.vocabDeck.put(row)
 }
