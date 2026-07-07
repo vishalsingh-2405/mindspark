@@ -2285,3 +2285,37 @@ git commit -m "chore: foundation verification pass" --allow-empty
 | Games 2–9 | Plan 2 |
 | Word Vault + pipeline | Plan 3 (incl. revisiting Home to add the "Today's Words" card from the design spec §Screens) |
 | Stats, audio, settings UI, PWA, CI, README | Plan 4 |
+
+## Handoff notes for Plans 2–4 (from the final integration review, 2026-07-07)
+
+**Plan 2 (games 2–9) owns:**
+- **Extract a `useGameRun` hook FIRST, before game #2** — wrap `useCountdown` +
+  `stepAdaptive` + the stats ref (finish-once guard, correct-only avgMs,
+  correctPeak-vs-peak) into one hook returning `{ level, msLeft, combo,
+  submitAnswer, finish }`. Refactor Quick Math onto it, then build the other
+  timed games on it. Eight hand-copies of three subtle correctness rules is a
+  migration; today it's an hour. It's also the single hook-point for Plan 4 audio.
+- Correct/wrong feedback animations ("glow pulse on correct, shake on wrong" —
+  spec §game screens; no CSS exists yet) + in-HUD running score + "Next game"
+  button on the ResultsCard.
+- Shared distractor helper: multiplication answers currently have a last-digit
+  tell (~88% at L5-6) — generate off-by-one-row errors (a×(b±1)) for ×/÷.
+
+**Plan 3 (Word Vault) owns:**
+- Dexie `this.version(2).stores({ vocabProgress: 'wordId' })` (restate v1 tables).
+- Decide the vocab skill-score path: spec says mastery drives it, but
+  `recordSession` hardcodes EWMA — either a `setSkillScore` store action or
+  Word Vault emits mastery-as-session-score.
+- Decide Word Vault's registry status: `GameProps` (difficulty/onFinish) doesn't
+  fit a deck flow — registry entry for display + own `/vocab` route, or an
+  optional `route` override on `GameDefinition`.
+- Home "Today's Words" card.
+
+**Plan 4 (polish) owns:**
+- ESLint bootstrap (no config exists — CI's "lint" step is net-new work), LICENSE
+  file, README.
+- Router `basename` + vite `base` if deploying under a subpath (also the
+  ErrorBoundary escape anchor's `href="/"`).
+- Wire `settings.reducedMotion` (currently decorative) and the store's silent
+  `catch {}` blocks → `console.warn` diagnostics.
+- Degraded-mode ResultsCard copy (always says "First run" when storage is down).

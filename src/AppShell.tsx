@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ComingSoon } from './screens/ComingSoon'
@@ -28,6 +28,7 @@ export function AppShell() {
             <Route path="/play/:gameId" element={<GamePlay />} />
             <Route path="/vocab" element={<ComingSoon title="WORD VAULT" />} />
             <Route path="/stats" element={<ComingSoon title="STATS" />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ErrorBoundary>
       </main>

@@ -26,13 +26,16 @@ export function GamePlay() {
   }, [game, runKey])
 
   async function handleFinish(result: GameResult) {
-    if (finishedRef.current) return
+    if (!game || finishedRef.current) return
     finishedRef.current = true
+    // The registry is authoritative for identity — a game component with a
+    // typo'd gameId/skill must not silently orphan its sessions.
+    const stamped = { ...result, gameId: game.id, skill: game.skill }
     // Every step tolerates storage failure — the ResultsCard must always appear.
-    const last = await lastSessionFor(result.gameId).catch(() => undefined)
-    await recordSession(result) // resolves even on storage failure, by design
-    await setGameLevel(result.gameId, result.difficultyReached).catch(() => {})
-    setOutcome({ score: result.score, delta: last ? result.score - last.score : null })
+    const last = await lastSessionFor(game.id).catch(() => undefined)
+    await recordSession(stamped) // resolves even on storage failure, by design
+    await setGameLevel(game.id, stamped.difficultyReached).catch(() => {})
+    setOutcome({ score: stamped.score, delta: last ? stamped.score - last.score : null })
   }
 
   if (!game) return <Navigate to="/games" replace />

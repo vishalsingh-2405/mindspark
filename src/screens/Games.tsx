@@ -11,13 +11,18 @@ export function Games() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const entries = await Promise.all(
-        games.map(async g => {
-          const [best, last] = await Promise.all([bestScoreFor(g.id), lastSessionFor(g.id)])
-          return [g.id, { best, last: last?.score }] as const
-        }),
-      )
-      if (!cancelled) setStats(Object.fromEntries(entries))
+      try {
+        const entries = await Promise.all(
+          games.map(async g => {
+            const [best, last] = await Promise.all([bestScoreFor(g.id), lastSessionFor(g.id)])
+            return [g.id, { best, last: last?.score }] as const
+          }),
+        )
+        if (!cancelled) setStats(Object.fromEntries(entries))
+      } catch {
+        // storage down — tiles fall back to "Not played yet"
+        if (!cancelled) setStats({})
+      }
     })()
     return () => { cancelled = true }
   }, [])
