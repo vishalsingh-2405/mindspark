@@ -1,7 +1,9 @@
+import { toDayString } from '../lib/dates'
 import { db } from '../storage/db'
+import { clearBankCache } from '../vocab/bank'
+import { newProgress } from '../vocab/srs'
 import { useAppStore } from './store'
 import { useVocabStore } from './vocabStore'
-import { clearBankCache } from '../vocab/bank'
 
 const SHARD = Array.from({ length: 20 }, (_, i) => ({
   id: `word${i}`, word: `word${i}`, pos: 'noun', meaning: `meaning ${i}`, example: '',
@@ -60,4 +62,29 @@ it('bank failure surfaces an error state for retry UI', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => new Response('x', { status: 500 })))
   await useVocabStore.getState().initToday()
   expect(useVocabStore.getState().status).toBe('error')
+})
+
+it('post-promotion decks resolve entries for lower-tier review words', async () => {
+  const everyday = [{ id: 'old1', word: 'old1', pos: 'noun', meaning: 'm', example: '' }]
+  const intermediate = Array.from({ length: 15 }, (_, i) => ({ id: `mid${i}`, word: `mid${i}`, pos: 'noun', meaning: `m${i}`, example: '' }))
+  vi.stubGlobal('fetch', vi.fn(async (url: unknown) =>
+    new Response(JSON.stringify(String(url).includes('everyday') ? everyday : intermediate))))
+  await useAppStore.getState().init()
+  useAppStore.setState({ profile: { ...useAppStore.getState().profile!, vocabTier: 'intermediate' } })
+  const today = toDayString(new Date())
+  await db.vocabProgress.put({ ...newProgress('old1', today), due: today })
+  await useVocabStore.getState().initToday()
+  const s = useVocabStore.getState()
+  expect(s.deck![0]).toEqual({ wordId: 'old1', isReview: true })
+  expect(s.entry?.word).toBe('old1')
+})
+
+it('rapid double grade only grades one card', async () => {
+  await useVocabStore.getState().initToday()
+  useVocabStore.getState().flip()
+  const g1 = useVocabStore.getState().grade(true)
+  const g2 = useVocabStore.getState().grade(true)
+  await Promise.all([g1, g2])
+  expect(useVocabStore.getState().index).toBe(1)
+  expect(await db.vocabProgress.count()).toBe(1)
 })

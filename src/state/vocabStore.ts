@@ -11,6 +11,7 @@ import { useAppStore } from './store'
 
 const PROMOTE_MIN_SERVED = 50
 const PROMOTE_RATIO = 0.8
+const TIER_ORDER: VocabTier[] = ['everyday', 'intermediate', 'advanced']
 const NEXT_TIER: Record<VocabTier, VocabTier | null> = {
   everyday: 'intermediate',
   intermediate: 'advanced',
@@ -54,8 +55,14 @@ export const useVocabStore = create<VocabState>((set, get) => ({
       const tier = app.profile!.vocabTier
       const wordsPerDay = app.settings!.wordsPerDay
       const today = toDayString(new Date())
-      const bank = await loadTier(tier)
-      bankById = bank.byId
+      // Entry lookup spans current + all lower tiers: shards are disjoint word sets,
+      // and post-promotion review cards reference lower-tier words. New-word selection
+      // stays current-tier only (bank = last of the slice).
+      const tierIdx = TIER_ORDER.indexOf(tier)
+      const banks = await Promise.all(TIER_ORDER.slice(0, tierIdx + 1).map(loadTier))
+      const bank = banks[banks.length - 1]
+      bankById = new Map()
+      for (const b of banks) for (const [id, e] of b.byId) bankById.set(id, e)
 
       let row = await repo.getDeckRow(today).catch(() => undefined)
       if (!row) {
@@ -98,6 +105,7 @@ export const useVocabStore = create<VocabState>((set, get) => ({
   async grade(knew) {
     const s = get()
     if (s.status !== 'ready' || !s.flipped || !deckRow) return
+    set({ flipped: false }) // re-entrancy guard: closes the double-tap window before the first await
     const card = deckRow.cards[deckRow.index]
     const today = toDayString(new Date())
 
@@ -158,11 +166,8 @@ async function maybePromoteTier(): Promise<void> {
     const seen = await repo.seenWordIds()
     const served = seen.filter(id => bank.byId.has(id))
     if (served.length < PROMOTE_MIN_SERVED) return
-    let mastered = 0
-    for (const id of served) {
-      const p = await repo.getVocabProgress(id)
-      if (p && isMastered(p)) mastered += 1
-    }
+    const rows = await repo.getVocabProgressBulk(served)
+    const mastered = rows.filter(r => r && isMastered(r)).length
     if (mastered / served.length >= PROMOTE_RATIO) {
       const profile = { ...app.profile!, vocabTier: next }
       useAppStore.setState({ profile })

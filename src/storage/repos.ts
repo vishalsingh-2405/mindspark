@@ -61,6 +61,10 @@ export async function getVocabProgress(wordId: string): Promise<VocabProgressRow
   return db.vocabProgress.get(wordId)
 }
 
+export async function getVocabProgressBulk(ids: string[]): Promise<(VocabProgressRow | undefined)[]> {
+  return db.vocabProgress.bulkGet(ids)
+}
+
 export async function dueReviews(today: string): Promise<VocabProgressRow[]> {
   return db.vocabProgress.where('due').belowOrEqual(today).toArray()
 }
