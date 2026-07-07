@@ -12,8 +12,8 @@ it('renders Home with the app title and bottom nav', async () => {
   }
 })
 
-it('shows placeholder screens for Vocab and Stats', async () => {
-  render(<MemoryRouter initialEntries={['/vocab']}><AppShell /></MemoryRouter>)
+it('shows placeholder screen for Stats', async () => {
+  render(<MemoryRouter initialEntries={['/stats']}><AppShell /></MemoryRouter>)
   expect(await screen.findByText(/coming soon/i)).toBeInTheDocument()
 })
 

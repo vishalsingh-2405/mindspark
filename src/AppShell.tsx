@@ -6,6 +6,7 @@ import { ComingSoon } from './screens/ComingSoon'
 import { GamePlay } from './screens/GamePlay'
 import { Games } from './screens/Games'
 import { Home } from './screens/Home'
+import { Vocab } from './screens/Vocab'
 import { useAppStore } from './state/store'
 
 export function AppShell() {
@@ -26,7 +27,7 @@ export function AppShell() {
             <Route path="/" element={<Home />} />
             <Route path="/games" element={<Games />} />
             <Route path="/play/:gameId" element={<GamePlay />} />
-            <Route path="/vocab" element={<ComingSoon title="WORD VAULT" />} />
+            <Route path="/vocab" element={<Vocab />} />
             <Route path="/stats" element={<ComingSoon title="STATS" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

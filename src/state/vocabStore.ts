@@ -66,7 +66,8 @@ export const useVocabStore = create<VocabState>((set, get) => ({
 
       let row = await repo.getDeckRow(today).catch(() => undefined)
       if (!row) {
-        const due = await repo.dueReviews(today).catch(() => [])
+        const due = (await repo.dueReviews(today).catch(() => []))
+          .filter(d => bankById.has(d.wordId)) // words can vanish from the bank across regenerations
         const seen = new Set(await repo.seenWordIds().catch(() => []))
         const unseen = bank.entries.filter(e => !seen.has(e.id)).map(e => e.id)
         const cards = buildDeck({
@@ -105,24 +106,42 @@ export const useVocabStore = create<VocabState>((set, get) => ({
   async grade(knew) {
     const s = get()
     if (s.status !== 'ready' || !s.flipped || !deckRow) return
-    set({ flipped: false }) // re-entrancy guard: closes the double-tap window before the first await
     const card = deckRow.cards[deckRow.index]
     const today = toDayString(new Date())
 
     elapsedMs += performance.now() - shownAt
 
-    const prev = await repo.getVocabProgress(card.wordId).catch(() => undefined)
-    const graded = gradeWord(prev ?? newProgress(card.wordId, today), knew, today)
-    await repo.saveVocabProgress(graded).catch(() => {})
-
+    // Advance the deck synchronously, before any await. flipped:false alone isn't a
+    // sufficient re-entrancy guard: it re-shows this same card as "revealable" while
+    // the writes below are still in flight, and a fast enough reveal→grade→reveal→grade
+    // cycle (rapid taps, or a tight test loop) can flip and grade it a second time
+    // before the first pass's writes land, corrupting the index. Committing the index
+    // move here — synchronously, in the same tick as the guard check — closes that
+    // window entirely: by the time control returns to any caller, the store already
+    // reflects the next card.
     if (knew && card.isReview) deckRow.knownReviews += 1
     if (knew && !card.isReview) deckRow.knownNew += 1
     deckRow.index += 1
+    const done = deckRow.index >= deckRow.cards.length
+    if (done) deckRow.completed = true
+
+    if (done) {
+      set({ status: 'complete', index: deckRow.index, flipped: false, summary: summarize(deckRow) })
+    } else {
+      shownAt = performance.now()
+      set({
+        index: deckRow.index,
+        entry: bankById.get(deckRow.cards[deckRow.index].wordId) ?? null,
+        flipped: false,
+      })
+    }
+
+    const prev = await repo.getVocabProgress(card.wordId).catch(() => undefined)
+    const graded = gradeWord(prev ?? newProgress(card.wordId, today), knew, today)
+    await repo.saveVocabProgress(graded).catch(() => {})
     await repo.saveDeckRow(deckRow).catch(() => {})
 
-    if (deckRow.index >= deckRow.cards.length) {
-      deckRow.completed = true
-      await repo.saveDeckRow(deckRow).catch(() => {})
+    if (done) {
       const summary = summarize(deckRow)
       await useAppStore.getState().recordSession({
         gameId: 'word-vault',
@@ -133,15 +152,7 @@ export const useVocabStore = create<VocabState>((set, get) => ({
         avgMs: summary.total ? elapsedMs / summary.total : 0,
       })
       await maybePromoteTier()
-      set({ status: 'complete', index: deckRow.index, summary })
-      return
     }
-    shownAt = performance.now()
-    set({
-      index: deckRow.index,
-      entry: bankById.get(deckRow.cards[deckRow.index].wordId) ?? null,
-      flipped: false,
-    })
   },
 }))
 

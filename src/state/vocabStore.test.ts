@@ -79,6 +79,15 @@ it('post-promotion decks resolve entries for lower-tier review words', async () 
   expect(s.entry?.word).toBe('old1')
 })
 
+it('due reviews for words no longer in any bank are excluded from the deck', async () => {
+  const today = toDayString(new Date())
+  await db.vocabProgress.put({ ...newProgress('ghost-word', today), due: today })
+  await useVocabStore.getState().initToday()
+  const s = useVocabStore.getState()
+  expect(s.deck!.some(c => c.wordId === 'ghost-word')).toBe(false)
+  expect(s.deck).toHaveLength(10) // still a full deck of new words
+})
+
 it('rapid double grade only grades one card', async () => {
   await useVocabStore.getState().initToday()
   useVocabStore.getState().flip()
