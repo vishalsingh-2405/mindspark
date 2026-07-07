@@ -150,8 +150,10 @@ settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
    noise, not learning value). `data-pipeline/README.md` records source licenses
    for attribution.
 
-**Runtime:** lazy-load only the current tier's shard (~1–2 MB, service-worker cached);
-in-memory index; zero network after first load.
+**Runtime:** lazy-load the current tier's shard plus all lower tiers (tiers are disjoint,
+and post-promotion review cards need lower-tier definitions — decided 2026-07-07 after
+review; ≤ ~2.1 MB total, service-worker cached); in-memory index; new words draw from
+the current tier only; zero network after first load.
 
 **Daily deck:** `wordsPerDay` (default 10, settable 5–25) new words in frequency order
 + reviews due today — reviews come strictly first (resolved reading of "first-weighted",
