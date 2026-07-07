@@ -132,7 +132,14 @@ settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
 1. Download WordNet + an English word-frequency list (default:
    hermitdave/FrequencyWords `en_full`, OpenSubtitles-derived; any ranked list works).
 2. Filter: single alphabetic words, 3–14 letters, clean definition, present in frequency
-   list; drop archaic/obscene/hyper-technical. ~150k → ~15k.
+   list; drop archaic/obscene/hyper-technical. ~150k → ~15k. Definitions take WordNet's
+   PRIMARY sense (index-file sense 1), with part of speech chosen by highest semantic-tag
+   count (ties: noun → verb → adj → adv) — an audit of naive byte-offset-order sense
+   picking found 44% wrong-sense definitions, 56% on the everyday tier (decided
+   2026-07-07). Obscenity filtering is three layers: LDNOOBW blocklist + a curated
+   supplemental list + an automatic gate dropping any entry whose gloss carries
+   obscenity/slur markers; dropped words backfill from the frequency list so the bank
+   stays at 15k.
 3. Tier by frequency: **Everyday** (top ~3k) · **Intermediate** (~5k) · **Advanced** (rest).
 4. Emit `public/data/vocab/{everyday,intermediate,advanced}.json`, entries
    `{ id, word, pos, meaning, example }`. Words without a WordNet example keep
