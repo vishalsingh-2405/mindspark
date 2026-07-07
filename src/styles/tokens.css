@@ -1,0 +1,15 @@
+:root {
+  --bg: #070b14;
+  --panel: #0e1526;
+  --panel-glass: rgba(14, 21, 38, 0.7);
+  --cyan: #00f0ff;
+  --magenta: #ff2e97;
+  --lime: #b6ff00;
+  --text: #eaf6ff;
+  --muted: #8a94a6;
+  --glow-cyan: 0 0 12px rgba(0, 240, 255, 0.4);
+  --glow-magenta: 0 0 12px rgba(255, 46, 151, 0.4);
+  --glow-lime: 0 0 12px rgba(182, 255, 0, 0.4);
+  --radius: 14px;
+  --nav-h: 56px;
+}
