@@ -81,7 +81,8 @@ a { color: inherit; }
   display: flex; flex-direction: column; gap: 4px;
 }
 .tile span { font-weight: 700; font-size: 14px; }
-.tile small { color: var(--muted); font-size: 11px; text-transform: capitalize; }
+.tile small { color: var(--muted); font-size: 11px; }
+.tile small:first-of-type { text-transform: capitalize; }
 
 /* Game screens */
 .game {

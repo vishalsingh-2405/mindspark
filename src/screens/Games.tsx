@@ -6,7 +6,7 @@ import { bestScoreFor, lastSessionFor } from '../storage/repos'
 interface GameStats { best?: number; last?: number }
 
 export function Games() {
-  const [stats, setStats] = useState<Record<string, GameStats>>({})
+  const [stats, setStats] = useState<Record<string, GameStats> | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -31,9 +31,11 @@ export function Games() {
             <span>{g.name}</span>
             <small>{g.skill}</small>
             <small>
-              {stats[g.id]?.best != null
-                ? `Best ${stats[g.id].best} · Last ${stats[g.id].last}`
-                : 'Not played yet'}
+              {stats === null
+                ? '…'
+                : stats[g.id]?.best != null
+                  ? `Best ${stats[g.id].best} · Last ${stats[g.id].last ?? '—'}`
+                  : 'Not played yet'}
             </small>
           </Link>
         ))}
