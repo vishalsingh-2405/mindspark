@@ -86,7 +86,13 @@ async function loadDefinitions() {
     const wordCount = parseInt(fields[3], 16)
     let verbatim = false
     for (let i = 0; i < wordCount; i++) {
-      if (fields[4 + i * 2] === lemma) { verbatim = true; break }
+      const rawWord = fields[4 + i * 2]
+      // data.adj words carry syntactic position markers — afraid(p), all(a),
+      // galore(ip) — absent from index lemmas. Markers are lowercase
+      // parenthesized suffixes, so stripping cannot weaken the proper-noun
+      // case check.
+      const bare = rawWord?.replace(/\((a|ip|p)\)$/, '')
+      if (bare === lemma) { verbatim = true; break }
     }
     if (!verbatim) continue
     const gloss = line.slice(bar + 1).trim()
@@ -114,6 +120,11 @@ const SUPPLEMENTAL_BLOCKLIST = [
   'boner','dago','dildo','gyp','gypped','heeb','hooker','horny','incest','injun',
   'jigaboo','mick','mongoloid','mulatto','paedophile','pedophile','pickaninny','rape','rapist','raping',
   'redskin','sambo','slut','spaz','spic','strumpet','tit','trollop','twat','whore','whorish','yid',
+  // bare units/abbreviations shipped as words + consistency with blocked 'skank'
+  'min','sec','gal','meg','mil','amp','fig','skanky',
+  // UK vulgar intensifier recovered by the (p)-marker fix; unlike 'sod' (grass)
+  // it has no innocent sense
+  'sodding',
 ]
 
 // 3. Blocklist: LDNOOBW + supplemental

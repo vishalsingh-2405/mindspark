@@ -26,7 +26,7 @@ export function parseIndexLine(line) {
   return { lemma: f[0], tagCnt, firstOffset }
 }
 
-const OBJECTIONABLE = /obscene|vulgar|ethnic slur|offensive term|disparaging|derogatory term|expletive/i
+const OBJECTIONABLE = /obscene|vulgar|ethnic slur|offensive term|disparaging|derogatory term|expletive|street name/i
 
 /** Family-safety gate: does this raw WordNet gloss mark the sense as obscene/slur? */
 export function isObjectionableGloss(gloss) {

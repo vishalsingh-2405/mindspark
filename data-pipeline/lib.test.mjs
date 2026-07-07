@@ -51,6 +51,7 @@ it('parses real WordNet index lines: lemma, tagsense count, first (primary-sense
 it('flags obscene/slur glosses and passes clean ones', () => {
   expect(isObjectionableGloss('(ethnic slur) offensive term for a person of Mexican descent')).toBe(true)
   expect(isObjectionableGloss('obscene terms for penis')).toBe(true)
+  expect(isObjectionableGloss('street names for gamma hydroxybutyrate')).toBe(true)
   expect(isObjectionableGloss('a deep ravine (usually with a river running through it)')).toBe(false)
 })
 

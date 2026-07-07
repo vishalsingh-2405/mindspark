@@ -55,10 +55,14 @@ empty string (the UI hides the row — see docs/superpowers decision log).
    audited build (arse, fucker, wop, squaw, …) plus preventive entries.
    Known-innocent homographs (censor, curse, tart, fairy, cracker, …) are
    deliberately NOT word-blocked — their clean primary senses may ship.
+   Also blocks bare unit/abbreviation lemmas (min, sec, amp, fig, …) —
+   accuracy outranks count; legitimate clippings (gym, exam, info, …) stay in.
 3. **Gloss gate** — `isObjectionableGloss` in `lib.mjs` drops any word whose
    primary-sense gloss is marked obscene/vulgar/ethnic slur/offensive/
    disparaging/derogatory/expletive, so slur senses never ship even for words
-   absent from both blocklists.
+   absent from both blocklists. Also gates "street name" drug glosses (max,
+   dope, …); clinical drug nouns (heroin, cocaine, morphine, opium, hashish)
+   ship dictionary definitions and are retained by policy.
 
 ## Data sources and licenses
 
