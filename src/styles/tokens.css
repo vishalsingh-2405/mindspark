@@ -11,5 +11,11 @@
   --glow-magenta: 0 0 12px rgba(255, 46, 151, 0.4);
   --glow-lime: 0 0 12px rgba(182, 255, 0, 0.4);
   --radius: 14px;
+  --radius-sm: 12px;
   --nav-h: 56px;
+  --border-cyan-weak: rgba(0, 240, 255, 0.2);
+  --border-cyan-med: rgba(0, 240, 255, 0.3);
+  --border-cyan-strong: rgba(0, 240, 255, 0.4);
+  --border-cyan-panel: rgba(0, 240, 255, 0.25);
+  --magenta-tint: rgba(255, 46, 151, 0.15);
 }
