@@ -1911,6 +1911,14 @@ git commit -m "feat: Quick Math question generator and score converter"
 
 ### Task 14: Quick Math — component + registry entry
 
+> **Post-review note (2026-07-07):** the shipped component supersedes the snippet
+> below in two ways, and Plan 2's games must copy the SHIPPED code, not this snippet:
+> (1) countdown uses the wall-clock `useCountdown` hook from `src/lib/useCountdown.ts`
+> (tick-counting drifts under tab throttling); (2) scoring uses *demonstrated*
+> difficulty — `correctPeak` (highest level answered correctly, 0 if none) feeds
+> `toScore`, while actual `peak` is reported only for next-session level resume.
+> Junk-tapping and idling both score 0.
+
 **Files:**
 - Create: `src/games/quick-math/Component.tsx`, `src/games/quick-math/index.ts`
 - Modify: `src/games/registry.ts`, `src/screens/Home.test.tsx`
