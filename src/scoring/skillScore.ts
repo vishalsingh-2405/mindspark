@@ -1,6 +1,7 @@
 const ALPHA = 0.25 // new session weight; history keeps 75%
 
 export function updateSkillScore(prev: number | null, session: number): number {
-  if (prev === null) return session
-  return Math.round((ALPHA * session + (1 - ALPHA) * prev) * 10) / 10
+  const s = Math.min(100, Math.max(0, session))
+  if (prev === null) return s
+  return Math.round((ALPHA * s + (1 - ALPHA) * prev) * 10) / 10
 }
