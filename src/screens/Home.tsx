@@ -25,9 +25,13 @@ export function Home() {
         )}
       </div>
       <RadarChart skills={profile?.skillScores ?? {}} />
+      <Link className="tile" to="/vocab" style={{ gridColumn: '1 / -1' }}>
+        <span>📖 Today's Words</span>
+        <small>10 new words + your reviews — keep the streak alive</small>
+      </Link>
       <div className="home__tiles">
         {quick.map(g => (
-          <Link className="tile" key={g.id} to={`/play/${g.id}`}>
+          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}>
             <span>{g.name}</span>
             <small>{g.skill}</small>
           </Link>

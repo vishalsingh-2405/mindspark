@@ -24,4 +24,6 @@ export interface GameDefinition {
   skill: Skill
   blurb: string
   Component: ComponentType<GameProps>
+  /** Non-arcade games can override where their tile navigates (default: /play/{id}). */
+  route?: string
 }

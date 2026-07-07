@@ -32,7 +32,7 @@ export function Games() {
       <h1 className="app-title">GAMES</h1>
       <div className="home__tiles" data-testid="games-grid">
         {games.map(g => (
-          <Link className="tile" key={g.id} to={`/play/${g.id}`}>
+          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}>
             <span>{g.name}</span>
             <small>{g.skill}</small>
             <small>

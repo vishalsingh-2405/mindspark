@@ -34,3 +34,10 @@ it('hides the freeze badge when no freezes are banked', () => {
   render(<MemoryRouter><Home /></MemoryRouter>)
   expect(screen.queryByText(/×/)).not.toBeInTheDocument()
 })
+
+it('shows the Today\'s Words card linking to /vocab', () => {
+  useAppStore.setState({ profile: structuredClone(DEFAULT_PROFILE) })
+  render(<MemoryRouter><Home /></MemoryRouter>)
+  const card = screen.getByRole('link', { name: /today's words/i })
+  expect(card).toHaveAttribute('href', '/vocab')
+})
