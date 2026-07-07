@@ -2274,5 +2274,5 @@ git commit -m "chore: foundation verification pass" --allow-empty
 | Home / Games screens, radar, dial | Tasks 9–12 |
 | Quick Math end-to-end | Tasks 13–15 |
 | Games 2–9 | Plan 2 |
-| Word Vault + pipeline | Plan 3 |
+| Word Vault + pipeline | Plan 3 (incl. revisiting Home to add the "Today's Words" card from the design spec §Screens) |
 | Stats, audio, settings UI, PWA, CI, README | Plan 4 |
