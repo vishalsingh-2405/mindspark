@@ -111,7 +111,10 @@ Play again / Next game).
    the streak survives (the frozen day shows a ❄️ in streak history and does not
    increment the counter). One freeze covers one missed day — two consecutive missed
    days need two freezes. No freezes left → streak resets to zero. Freeze count shows
-   as a small ❄️ badge next to the streak flame on Home.
+   as a small ❄️ badge next to the streak flame on Home. Unused banked freezes are
+   KEPT across a streak reset (earned inventory, Duolingo-style — decided 2026-07-07);
+   the 50-day milestone tracker resets with the streak. Plays dated earlier than the
+   last played day (clock rollback / timezone travel) are ignored.
 
 ## Data model (Dexie / IndexedDB)
 
