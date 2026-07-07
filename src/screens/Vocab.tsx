@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { NeonButton } from '../components/NeonButton'
+import { toDayString } from '../lib/dates'
 import { FlipCard } from '../vocab/FlipCard'
 import { useAppStore } from '../state/store'
 import { useVocabStore } from '../state/vocabStore'
@@ -11,9 +12,10 @@ export function Vocab() {
   const mode = settings?.vocabMode ?? 'word-to-meaning'
 
   useEffect(() => {
-    if (vocab.status === 'idle') void vocab.initToday()
+    const stale = vocab.day !== null && vocab.day !== toDayString(new Date())
+    if (vocab.status === 'idle' || stale) void vocab.initToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vocab.status])
+  }, [vocab.status, vocab.day])
 
   if (vocab.status === 'idle' || vocab.status === 'loading') {
     return <div className="screen" style={{ textAlign: 'center' }}><h1 className="app-title">WORD VAULT</h1><p style={{ color: 'var(--muted)' }}>Loading…</p></div>
@@ -66,7 +68,12 @@ export function Vocab() {
       ) : (
         <div className="panel" style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--muted)' }}>This word is no longer in the bank.</p>
-          <NeonButton onClick={() => { vocab.flip(); void vocab.grade(true) }}>Skip</NeonButton>
+          <NeonButton onClick={() => {
+            const s = useVocabStore.getState()
+            if (s.entry) return // only ghost cards are skippable; a fast second click must not touch the next real card
+            s.flip()
+            void s.grade(true)
+          }}>Skip</NeonButton>
         </div>
       )}
       {vocab.flipped && (

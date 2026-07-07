@@ -14,7 +14,7 @@ beforeEach(async () => {
   await db.open()
   clearBankCache()
   useAppStore.setState({ profile: null, settings: null, storageOk: true })
-  useVocabStore.setState({ status: 'idle', deck: null, index: 0, entry: null, flipped: false, error: null, summary: null })
+  useVocabStore.setState({ status: 'idle', deck: null, index: 0, entry: null, flipped: false, error: null, summary: null, day: null })
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(SHARD))))
 })
 
@@ -52,7 +52,7 @@ it('a refresh mid-deck resumes where it left off', async () => {
   useVocabStore.getState().flip()
   await useVocabStore.getState().grade(false)
   // simulate reload
-  useVocabStore.setState({ status: 'idle', deck: null, index: 0, entry: null, flipped: false, error: null, summary: null })
+  useVocabStore.setState({ status: 'idle', deck: null, index: 0, entry: null, flipped: false, error: null, summary: null, day: null })
   clearBankCache()
   await useVocabStore.getState().initToday()
   expect(useVocabStore.getState().index).toBe(1)
@@ -96,4 +96,20 @@ it('rapid double grade only grades one card', async () => {
   await Promise.all([g1, g2])
   expect(useVocabStore.getState().index).toBe(1)
   expect(await db.vocabProgress.count()).toBe(1)
+})
+
+it('unawaited flip/grade cycles walk the whole deck exactly once', async () => {
+  await useVocabStore.getState().initToday()
+  const total = useVocabStore.getState().deck!.length
+  const pending: Promise<void>[] = []
+  for (let i = 0; i < total; i++) {
+    useVocabStore.getState().flip()
+    pending.push(useVocabStore.getState().grade(true)) // deliberately NOT awaited per-iteration
+  }
+  await Promise.all(pending)
+  const s = useVocabStore.getState()
+  expect(s.status).toBe('complete')
+  expect(s.index).toBe(total)
+  expect(await db.vocabProgress.count()).toBe(total)
+  expect(await db.sessions.count()).toBe(1)
 })

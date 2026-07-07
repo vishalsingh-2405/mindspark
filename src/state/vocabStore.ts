@@ -28,6 +28,7 @@ interface VocabState {
   flipped: boolean
   error: string | null
   summary: DeckSummary | null
+  day: string | null
   initToday: () => Promise<void>
   flip: () => void
   grade: (knew: boolean) => Promise<void>
@@ -46,6 +47,7 @@ export const useVocabStore = create<VocabState>((set, get) => ({
   flipped: false,
   error: null,
   summary: null,
+  day: null,
 
   async initToday() {
     set({ status: 'loading', error: null })
@@ -81,7 +83,7 @@ export const useVocabStore = create<VocabState>((set, get) => ({
       }
       deckRow = row
       if (row.completed || row.index >= row.cards.length) {
-        set({ status: 'complete', deck: row.cards, index: row.index, summary: summarize(row) })
+        set({ status: 'complete', deck: row.cards, index: row.index, summary: summarize(row), day: today })
         return
       }
       shownAt = performance.now()
@@ -93,6 +95,7 @@ export const useVocabStore = create<VocabState>((set, get) => ({
         entry: bankById.get(row.cards[row.index].wordId) ?? null,
         flipped: false,
         summary: null,
+        day: today,
       })
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : 'failed to load' })
@@ -168,11 +171,16 @@ function summarize(row: VocabDeckRow): DeckSummary {
 }
 
 async function maybePromoteTier(): Promise<void> {
-  const app = useAppStore.getState()
-  const tier = app.profile!.vocabTier
-  const next = NEXT_TIER[tier]
-  if (!next) return
+  // Everything here — including the initial profile read — is best-effort: a slow
+  // background invocation can still be in flight after the profile has gone away
+  // (e.g. a reset elsewhere in the app), and this must never surface as an unhandled
+  // rejection off a fire-and-forget grade() call.
   try {
+    const profile = useAppStore.getState().profile
+    if (!profile) return
+    const tier = profile.vocabTier
+    const next = NEXT_TIER[tier]
+    if (!next) return
     const bank = await loadTier(tier)
     const seen = await repo.seenWordIds()
     const served = seen.filter(id => bank.byId.has(id))
@@ -180,9 +188,9 @@ async function maybePromoteTier(): Promise<void> {
     const rows = await repo.getVocabProgressBulk(served)
     const mastered = rows.filter(r => r && isMastered(r)).length
     if (mastered / served.length >= PROMOTE_RATIO) {
-      const profile = { ...app.profile!, vocabTier: next }
-      useAppStore.setState({ profile })
-      await repo.saveProfile(profile).catch(() => {})
+      const updated = { ...profile, vocabTier: next }
+      useAppStore.setState({ profile: updated })
+      await repo.saveProfile(updated).catch(() => {})
     }
   } catch {
     // promotion is best-effort; storage/bank hiccups must not block deck completion
