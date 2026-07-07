@@ -1988,7 +1988,8 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     onFinish({
       gameId: 'quick-math',
       skill: 'math',
-      score: toScore({ difficultyReached: s.peak, accuracy, avgMs }),
+      // zero-answer runs score 0 — idling must never bank difficulty points
+      score: s.total === 0 ? 0 : toScore({ difficultyReached: s.peak, accuracy, avgMs }),
       difficultyReached: s.peak,
       accuracy,
       avgMs,
