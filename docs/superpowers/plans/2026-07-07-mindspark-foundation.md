@@ -2116,10 +2116,11 @@ Run: `npm test` → Expected: FAIL, cannot resolve `./GamePlay`.
 
 - [ ] **Step 3: Implement**
 
-`src/components/ResultsCard.tsx`:
+`src/components/ResultsCard.tsx` (note: navigation via `useNavigate` — wrapping a
+`<button>` in a `<Link>` is invalid HTML and an a11y defect):
 
 ```tsx
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { NeonButton } from './NeonButton'
 
 interface Props {
@@ -2129,6 +2130,7 @@ interface Props {
 }
 
 export function ResultsCard({ score, delta, onReplay }: Props) {
+  const navigate = useNavigate()
   return (
     <div className="results panel">
       <h2>Session complete</h2>
@@ -2142,8 +2144,8 @@ export function ResultsCard({ score, delta, onReplay }: Props) {
       </div>
       <div className="results__actions">
         <NeonButton onClick={onReplay}>Play again</NeonButton>
-        <Link to="/games"><NeonButton variant="magenta" style={{ width: '100%' }}>All games</NeonButton></Link>
-        <Link to="/"><NeonButton variant="lime" style={{ width: '100%' }}>Home</NeonButton></Link>
+        <NeonButton variant="magenta" onClick={() => navigate('/games')}>All games</NeonButton>
+        <NeonButton variant="lime" onClick={() => navigate('/')}>Home</NeonButton>
       </div>
     </div>
   )
