@@ -33,11 +33,11 @@ it('clamps at min 1 and max 10', () => {
   let low = at(1)
   low = stepAdaptive(low, false)
   low = stepAdaptive(low, false)
-  expect(low.level).toBe(1)
+  expect(low).toEqual({ level: 1, correctRun: 0, missRun: 0 })
 
   let high = at(10)
   high = stepAdaptive(high, true)
   high = stepAdaptive(high, true)
   high = stepAdaptive(high, true)
-  expect(high.level).toBe(10)
+  expect(high).toEqual({ level: 10, correctRun: 0, missRun: 0 })
 })
