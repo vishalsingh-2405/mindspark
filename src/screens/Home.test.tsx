@@ -19,6 +19,7 @@ it('shows streak, freezes, and the score dial', () => {
   expect(screen.getByText('Elite')).toBeInTheDocument()
   expect(screen.getByText(/12-day streak/)).toBeInTheDocument()
   expect(screen.getByText(/×1/)).toBeInTheDocument()
+  expect(screen.getByText('Quick Math')).toBeInTheDocument()
 })
 
 it('renders sanely with no profile yet', () => {
