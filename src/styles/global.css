@@ -60,6 +60,7 @@ a { color: inherit; }
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 .neon-btn:active { transform: scale(0.97); }
+a.neon-btn { text-decoration: none; }
 .neon-btn--cyan { color: var(--cyan); border-color: var(--cyan); box-shadow: var(--glow-cyan); }
 .neon-btn--magenta { color: var(--magenta); border-color: var(--magenta); box-shadow: var(--glow-magenta); }
 .neon-btn--lime { color: var(--lime); border-color: var(--lime); box-shadow: var(--glow-lime); }
