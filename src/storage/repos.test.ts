@@ -1,6 +1,6 @@
 import { db } from './db'
 import {
-  loadProfile, saveProfile, loadSettings, addSession,
+  loadProfile, saveProfile, loadSettings, saveSettings, addSession,
   lastSessionFor, bestScoreFor, getGameLevel, setGameLevel,
 } from './repos'
 
@@ -41,4 +41,19 @@ it('game level defaults to 1 and round-trips', async () => {
   expect(await getGameLevel('echo')).toBe(1)
   await setGameLevel('echo', 5)
   expect(await getGameLevel('echo')).toBe(5)
+})
+
+it('persists across a database reopen', async () => {
+  await setGameLevel('quick-math', 7)
+  await db.close()
+  await db.open()
+  expect(await getGameLevel('quick-math')).toBe(7)
+})
+
+it('saveSettings round-trips', async () => {
+  const s = await loadSettings()
+  await saveSettings({ ...s, soundOn: false, wordsPerDay: 15 })
+  const reloaded = await loadSettings()
+  expect(reloaded.soundOn).toBe(false)
+  expect(reloaded.wordsPerDay).toBe(15)
 })

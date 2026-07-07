@@ -21,7 +21,7 @@ export interface ProfileRow {
   lastPlayedDate: string | null
   freezesAvailable: number
   lastFreezeMilestone: number
-  frozenDates: string[]
+  frozenDates: readonly string[]
 }
 
 export interface SettingsRow {
@@ -37,7 +37,7 @@ export interface GameLevelRow {
   lastPeak: number
 }
 
-export const DEFAULT_PROFILE: ProfileRow = {
+export const DEFAULT_PROFILE: ProfileRow = Object.freeze({
   id: 'profile',
   brainScore: null,
   skillScores: {},
@@ -47,15 +47,15 @@ export const DEFAULT_PROFILE: ProfileRow = {
   freezesAvailable: 0,
   lastFreezeMilestone: 0,
   frozenDates: [],
-}
+})
 
-export const DEFAULT_SETTINGS: SettingsRow = {
+export const DEFAULT_SETTINGS: SettingsRow = Object.freeze({
   id: 'settings',
   soundOn: true,
   wordsPerDay: 10,
   vocabMode: 'word-to-meaning',
   reducedMotion: false,
-}
+})
 
 export class MindSparkDB extends Dexie {
   sessions!: Table<SessionRow, number>

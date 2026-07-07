@@ -9,7 +9,7 @@ export async function loadProfile(): Promise<ProfileRow> {
   const row = await db.profile.get('profile')
   if (row) return row
   await db.profile.put(DEFAULT_PROFILE)
-  return { ...DEFAULT_PROFILE }
+  return structuredClone(DEFAULT_PROFILE)
 }
 
 export async function saveProfile(p: ProfileRow): Promise<void> {
@@ -20,7 +20,7 @@ export async function loadSettings(): Promise<SettingsRow> {
   const row = await db.settings.get('settings')
   if (row) return row
   await db.settings.put(DEFAULT_SETTINGS)
-  return { ...DEFAULT_SETTINGS }
+  return structuredClone(DEFAULT_SETTINGS)
 }
 
 export async function saveSettings(s: SettingsRow): Promise<void> {
@@ -28,7 +28,7 @@ export async function saveSettings(s: SettingsRow): Promise<void> {
 }
 
 export async function addSession(row: Omit<SessionRow, 'id'>): Promise<void> {
-  await db.sessions.add(row as SessionRow)
+  await db.sessions.add(row)
 }
 
 export async function lastSessionFor(gameId: string): Promise<SessionRow | undefined> {
