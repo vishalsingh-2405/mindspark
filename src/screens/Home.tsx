@@ -6,6 +6,7 @@ import { useAppStore } from '../state/store'
 
 export function Home() {
   const profile = useAppStore(s => s.profile)
+  const freezes = profile?.freezesAvailable ?? 0
   const quick = games.slice(0, 4)
 
   return (
@@ -14,8 +15,13 @@ export function Home() {
       <ScoreDial score={profile?.brainScore ?? null} />
       <div className="home__streak">
         <span>🔥 {profile?.streak ?? 0}-day streak</span>
-        {(profile?.freezesAvailable ?? 0) > 0 && (
-          <span className="home__freeze">❄️ ×{profile!.freezesAvailable}</span>
+        {freezes > 0 && (
+          <span
+            className="home__freeze"
+            aria-label={`${freezes} streak ${freezes === 1 ? 'freeze' : 'freezes'} available`}
+          >
+            ❄️ ×{freezes}
+          </span>
         )}
       </div>
       <RadarChart skills={profile?.skillScores ?? {}} />
