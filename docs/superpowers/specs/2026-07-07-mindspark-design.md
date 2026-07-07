@@ -135,8 +135,11 @@ settings       { soundOn, wordsPerDay, vocabMode, reducedMotion }
    list; drop archaic/obscene/hyper-technical. ~150k → ~15k.
 3. Tier by frequency: **Everyday** (top ~3k) · **Intermediate** (~5k) · **Advanced** (rest).
 4. Emit `public/data/vocab/{everyday,intermediate,advanced}.json`, entries
-   `{ id, word, pos, meaning, example }`. Missing examples get a templated fallback.
-   `data-pipeline/README.md` records source licenses for attribution.
+   `{ id, word, pos, meaning, example }`. Words without a WordNet example keep
+   `example: ''` and the flashcard simply hides its example row (decided 2026-07-07;
+   supersedes the earlier "templated fallback" idea — a fabricated sentence adds
+   noise, not learning value). `data-pipeline/README.md` records source licenses
+   for attribution.
 
 **Runtime:** lazy-load only the current tier's shard (~1–2 MB, service-worker cached);
 in-memory index; zero network after first load.
