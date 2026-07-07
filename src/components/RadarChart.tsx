@@ -11,14 +11,15 @@ const AXES: { key: Skill; label: string }[] = [
 function point(i: number, value: number): [number, number] {
   const angle = (Math.PI * 2 * i) / AXES.length - Math.PI / 2
   const r = (value / 100) * 60
-  return [75 + r * Math.cos(angle), 75 + r * Math.sin(angle)]
+  return [90 + r * Math.cos(angle), 90 + r * Math.sin(angle)]
 }
 
 export function RadarChart({ skills }: { skills: Partial<Record<Skill, number>> }) {
   const outline = AXES.map((_, i) => point(i, 100).join(',')).join(' ')
   const values = AXES.map((a, i) => point(i, skills[a.key] ?? 0).join(',')).join(' ')
+  const label = `Skill profile: ${AXES.map((a) => `${a.label} ${skills[a.key] ?? 0}`).join(', ')}`
   return (
-    <svg viewBox="0 0 150 150" className="radar" role="img" aria-label="Skill profile">
+    <svg viewBox="0 0 180 180" className="radar" role="img" aria-label={label}>
       <polygon points={outline} fill="none" stroke="var(--muted)" strokeOpacity="0.35" />
       <polygon points={values} fill="rgba(0, 240, 255, 0.18)" stroke="var(--cyan)" />
       {AXES.map((a, i) => {

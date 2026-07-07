@@ -27,3 +27,17 @@ it('RadarChart renders all five skill axes', () => {
     expect(screen.getByText(label)).toBeInTheDocument()
   }
 })
+
+it('NeonButton merges className and fires onClick', async () => {
+  const onClick = vi.fn()
+  render(<NeonButton className="extra" onClick={onClick}>Go</NeonButton>)
+  const btn = screen.getByRole('button', { name: 'Go' })
+  expect(btn.className).toContain('extra')
+  btn.click()
+  expect(onClick).toHaveBeenCalledOnce()
+})
+
+it('ScoreDial at zero renders no progress stroke (no glow dot)', () => {
+  const { container } = render(<ScoreDial score={0} />)
+  expect(container.querySelectorAll('circle')).toHaveLength(1) // background only
+})

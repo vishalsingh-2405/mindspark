@@ -5,5 +5,11 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 export function NeonButton({ variant = 'cyan', className = '', ...rest }: Props) {
-  return <button className={`neon-btn neon-btn--${variant} ${className}`} {...rest} />
+  return (
+    <button
+      type="button"
+      className={`neon-btn neon-btn--${variant} ${className}`.trim()}
+      {...rest}
+    />
+  )
 }
