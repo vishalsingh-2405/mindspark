@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** Wall-clock countdown: survives tab throttling, stops ticking at 0. */
 export function useCountdown(initialMs: number, maxMs: number) {
+  // eslint-disable-next-line react-hooks/purity -- initial deadline snapshot; only the first render's value is kept by useRef
   const deadlineRef = useRef(performance.now() + initialMs)
   const [msLeft, setMsLeft] = useState(initialMs)
 

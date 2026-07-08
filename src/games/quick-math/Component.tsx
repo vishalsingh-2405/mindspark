@@ -10,6 +10,7 @@ const BONUS_MS = 2_000
 const MAX_MS = 60_000
 
 export function QuickMath({ difficulty, onFinish }: GameProps) {
+  // eslint-disable-next-line react-hooks/purity -- intentional: seed the RNG from wall-clock time once per mount
   const rng = useMemo(() => createRng(Date.now() % 2 ** 31), [])
   const [adaptive, setAdaptive] = useState<AdaptiveState>({ level: difficulty, correctRun: 0, missRun: 0 })
   const [question, setQuestion] = useState<Question>(() => generateQuestion(difficulty, rng))
@@ -22,6 +23,7 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     correctMs: 0,
     peak: difficulty,
     correctPeak: 0,
+    // eslint-disable-next-line react-hooks/purity -- placeholder value, overwritten by the mount effect below before any answer can occur
     askedAt: performance.now(),
   })
   const doneRef = useRef(false)
@@ -55,12 +57,14 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     s.total += 1
     if (correct) {
       s.correct += 1
+      // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
       s.correctMs += performance.now() - s.askedAt
       // level of the question just answered — difficulty must be demonstrated, not merely visited
       s.correctPeak = Math.max(s.correctPeak, adaptive.level)
     }
     const next = stepAdaptive(adaptive, correct)
     s.peak = Math.max(s.peak, next.level)
+    // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
     s.askedAt = performance.now()
     setAdaptive(next)
     setCombo(c => (correct ? c + 1 : 0))
