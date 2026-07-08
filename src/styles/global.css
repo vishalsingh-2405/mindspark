@@ -179,3 +179,6 @@ a.neon-btn { text-decoration: none; }
 .sheet__row--stack { flex-direction: column; align-items: stretch; gap: 8px; }
 .sheet input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--cyan); }
 .sheet input[type='range'] { width: 100%; accent-color: var(--cyan); }
+
+/* Stats */
+.line-chart { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.5)); }

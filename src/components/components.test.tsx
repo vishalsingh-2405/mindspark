@@ -5,6 +5,7 @@ import { NeonButton } from './NeonButton'
 import { ScoreDial } from './ScoreDial'
 import { RadarChart } from './RadarChart'
 import { ResultsCard } from './ResultsCard'
+import { LineChart } from './LineChart'
 
 it('NeonButton renders children and variant class', () => {
   render(<NeonButton variant="lime">Play</NeonButton>)
@@ -51,4 +52,15 @@ it('ResultsCard shows a storage warning instead of a bogus baseline when storage
   expect(screen.getByText(/storage off/i)).toBeInTheDocument()
   expect(screen.queryByText(/first run/i)).not.toBeInTheDocument()
   useAppStore.setState({ storageOk: true })
+})
+
+it('LineChart renders a path through the points and a dot on the last one', () => {
+  const { container } = render(<LineChart points={[0, 50, 100]} />)
+  expect(container.querySelector('path')).toBeInTheDocument()
+  expect(container.querySelector('circle')).toBeInTheDocument()
+})
+
+it('LineChart renders nothing for fewer than 2 points', () => {
+  const { container } = render(<LineChart points={[42]} />)
+  expect(container).toBeEmptyDOMElement()
 })
