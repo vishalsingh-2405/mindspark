@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { ComingSoon } from './screens/ComingSoon'
 import { GamePlay } from './screens/GamePlay'
 import { Games } from './screens/Games'
 import { Home } from './screens/Home'
+import { Stats } from './screens/Stats'
 import { Vocab } from './screens/Vocab'
 import { useAppStore } from './state/store'
 
@@ -33,7 +33,7 @@ export function AppShell() {
             <Route path="/games" element={<Games />} />
             <Route path="/play/:gameId" element={<GamePlay />} />
             <Route path="/vocab" element={<Vocab />} />
-            <Route path="/stats" element={<ComingSoon title="STATS" />} />
+            <Route path="/stats" element={<Stats />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ErrorBoundary>

@@ -12,9 +12,10 @@ it('renders Home with the app title and bottom nav', async () => {
   }
 })
 
-it('shows placeholder screen for Stats', async () => {
+it('renders the Stats screen', async () => {
   render(<MemoryRouter initialEntries={['/stats']}><AppShell /></MemoryRouter>)
-  expect(await screen.findByText(/coming soon/i)).toBeInTheDocument()
+  expect(await screen.findByText('STATS')).toBeInTheDocument()
+  expect(await screen.findByText(/words learned/i)).toBeInTheDocument()
 })
 
 it('error fallback clears when the route changes (remount via key)', async () => {

@@ -182,3 +182,13 @@ a.neon-btn { text-decoration: none; }
 
 /* Stats */
 .line-chart { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.5)); }
+.stats__h { color: var(--cyan); font-size: 13px; letter-spacing: 2px; margin: 0 0 10px; text-transform: uppercase; }
+.stats__empty { color: var(--muted); font-size: 13px; margin: 0; }
+.stats__skill { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; }
+.stats__skill-name { text-transform: capitalize; font-size: 14px; flex: 0 0 70px; }
+.stats__spark { flex: 1; max-width: 140px; }
+.stats__skill-score { color: var(--cyan); font-weight: 700; min-width: 32px; text-align: right; }
+.stats__pair { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+.stats__strip { display: flex; gap: 4px; margin-top: 10px; }
+.stats__day { flex: 1; height: 8px; border-radius: 2px; background: var(--bg); border: 1px solid var(--border-cyan-weak); }
+.stats__day.is-played { background: var(--lime); box-shadow: var(--glow-lime); border-color: var(--lime); }
