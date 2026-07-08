@@ -127,6 +127,7 @@ a.neon-btn { text-decoration: none; }
 .flip-card {
   background: transparent; border: none; padding: 0; width: 100%;
   perspective: 900px; cursor: pointer; min-height: 280px;
+  color: var(--text); /* buttons default to dark UA buttontext; force light so card text stays legible */
 }
 .flip-card__inner {
   position: relative; width: 100%; min-height: 280px;
@@ -141,7 +142,7 @@ a.neon-btn { text-decoration: none; }
 }
 .flip-card__face--front { border: 1px solid var(--border-cyan-strong); box-shadow: var(--glow-cyan); }
 .flip-card__face--back { border: 1px solid rgba(255, 46, 151, 0.4); box-shadow: var(--glow-magenta); transform: rotateY(180deg); }
-.flip-card__word { font-size: 30px; font-weight: 800; letter-spacing: 1px; text-shadow: var(--glow-cyan); text-transform: uppercase; }
+.flip-card__word { color: var(--cyan); font-size: 30px; font-weight: 800; letter-spacing: 1px; text-shadow: var(--glow-cyan); text-transform: uppercase; }
 .flip-card__word--small { font-size: 18px; }
 .flip-card__pos { color: var(--cyan); font-style: italic; font-size: 13px; }
 .flip-card__meaning { font-size: 16px; line-height: 1.5; color: var(--text); }
