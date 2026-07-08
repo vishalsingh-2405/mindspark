@@ -36,6 +36,14 @@ export async function addSession(row: Omit<SessionRow, 'id'>): Promise<void> {
   await db.sessions.add(row)
 }
 
+export async function allSessions(): Promise<SessionRow[]> {
+  return db.sessions.toArray()
+}
+
+export async function allVocabProgress(): Promise<VocabProgressRow[]> {
+  return db.vocabProgress.toArray()
+}
+
 export async function lastSessionFor(gameId: string): Promise<SessionRow | undefined> {
   return db.sessions.where('gameId').equals(gameId).last()
 }
