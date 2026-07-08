@@ -12,10 +12,15 @@ import { useAppStore } from './state/store'
 export function AppShell() {
   const init = useAppStore(s => s.init)
   const storageOk = useAppStore(s => s.storageOk)
+  const settings = useAppStore(s => s.settings)
   const { pathname } = useLocation()
   const inGame = pathname === '/play' || pathname.startsWith('/play/')
 
   useEffect(() => { void init() }, [init])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('reduced-motion', settings?.reducedMotion ?? false)
+  }, [settings?.reducedMotion])
 
   return (
     <div className="app">

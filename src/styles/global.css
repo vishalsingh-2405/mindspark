@@ -20,6 +20,14 @@ a { color: inherit; }
   }
 }
 
+/* Settings-driven reduced motion (mirrors the prefers-reduced-motion block above) */
+:root.reduced-motion *, :root.reduced-motion *::before, :root.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* Layout */
 .app { min-height: 100%; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; }
 .app__main { flex: 1; padding: 16px 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px); }
