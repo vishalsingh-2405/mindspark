@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { playChime } from '../audio/sfx'
 import { NeonButton } from '../components/NeonButton'
 import { toDayString } from '../lib/dates'
 import { FlipCard } from '../vocab/FlipCard'
@@ -16,6 +17,12 @@ export function Vocab() {
     if (vocab.status === 'idle' || stale) void vocab.initToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocab.status, vocab.day])
+
+  const prevStatus = useRef(vocab.status)
+  useEffect(() => {
+    if (prevStatus.current === 'ready' && vocab.status === 'complete') playChime()
+    prevStatus.current = vocab.status
+  }, [vocab.status])
 
   if (vocab.status === 'idle' || vocab.status === 'loading') {
     return <div className="screen" style={{ textAlign: 'center' }}><h1 className="app-title">WORD VAULT</h1><p style={{ color: 'var(--muted)' }}>Loading…</p></div>

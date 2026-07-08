@@ -7,6 +7,9 @@ import { useVocabStore } from '../state/vocabStore'
 import { clearBankCache } from '../vocab/bank'
 import { Vocab } from './Vocab'
 
+vi.mock('../audio/sfx', () => ({ playBlip: vi.fn(), playBuzz: vi.fn(), playTick: vi.fn(), playChime: vi.fn() }))
+import { playChime } from '../audio/sfx'
+
 const SHARD = Array.from({ length: 12 }, (_, i) => ({
   id: `word${i}`, word: `word${i}`, pos: 'noun', meaning: `meaning ${i}`, example: '',
 }))
@@ -41,6 +44,7 @@ it('completing the deck shows the summary panel', async () => {
   }
   expect(await screen.findByText(/deck complete/i)).toBeInTheDocument()
   expect(screen.getByText('100')).toBeInTheDocument()
+  expect(playChime).toHaveBeenCalledOnce()
 })
 
 it('shows retry on bank failure', async () => {

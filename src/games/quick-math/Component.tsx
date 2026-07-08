@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
@@ -33,6 +34,11 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     statsRef.current.askedAt = performance.now()
   }, [])
 
+  const secLeft = Math.max(0, Math.ceil(timeLeft / 1000))
+  useEffect(() => {
+    if (secLeft > 0 && secLeft <= 3 && !doneRef.current) playTick()
+  }, [secLeft])
+
   useEffect(() => {
     if (timeLeft > 0 || doneRef.current) return
     doneRef.current = true
@@ -54,6 +60,8 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     if (doneRef.current) return
     const s = statsRef.current
     const correct = choice === question.answer
+    if (correct) playBlip()
+    else playBuzz()
     s.total += 1
     if (correct) {
       s.correct += 1
@@ -63,6 +71,7 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
       s.correctPeak = Math.max(s.correctPeak, adaptive.level)
     }
     const next = stepAdaptive(adaptive, correct)
+    if (next.level > adaptive.level) playChime()
     s.peak = Math.max(s.peak, next.level)
     // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
     s.askedAt = performance.now()

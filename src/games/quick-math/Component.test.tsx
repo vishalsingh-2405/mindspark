@@ -1,7 +1,31 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { QuickMath } from './Component'
 
+vi.mock('../../audio/sfx', () => ({
+  playBlip: vi.fn(),
+  playBuzz: vi.fn(),
+  playTick: vi.fn(),
+  playChime: vi.fn(),
+}))
+import { playBlip, playBuzz, playChime } from '../../audio/sfx'
+
 afterEach(() => vi.useRealTimers())
+beforeEach(() => vi.clearAllMocks())
+
+/**
+ * The question text is deterministic per render tree; compute its answer from the text.
+ * NOTE: the operator class uses the real Unicode minus sign (U+2212, "−") that
+ * generateQuestion() renders — not the ASCII hyphen — otherwise subtraction
+ * questions (~half of difficulty-1 renders) fail to match and the test flakes.
+ */
+function solveOnScreen(): { correct: number; wrong: number } {
+  const text = screen.getByText(/\d+ [+−×÷] \d+/).textContent!
+  const m = text.match(/(\d+) ([+−×÷]) (\d+)/)!
+  const a = Number(m[1]); const b = Number(m[3])
+  const answer = m[2] === '+' ? a + b : m[2] === '−' ? a - b : m[2] === '×' ? a * b : a / b
+  const choices = screen.getAllByRole('button').map(btn => Number(btn.textContent))
+  return { correct: answer, wrong: choices.find(c => c !== answer)! }
+}
 
 /** Parse a question's display text (−, ×, ÷ glyphs; + before × precedence form). */
 function solve(text: string): number {
@@ -61,4 +85,20 @@ it('junk-tapping wrong answers never banks difficulty points', () => {
   const result = onFinish.mock.calls[0][0]
   expect(result.accuracy).toBe(0)
   expect(result.score).toBe(0)
+})
+
+it('plays blip on correct and buzz on wrong', () => {
+  render(<QuickMath difficulty={1} onFinish={() => {}} />)
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().correct) }))
+  expect(playBlip).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().wrong) }))
+  expect(playBuzz).toHaveBeenCalledOnce()
+})
+
+it('plays chime on level-up (3 consecutive correct)', () => {
+  render(<QuickMath difficulty={1} onFinish={() => {}} />)
+  for (let i = 0; i < 3; i++) {
+    fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().correct) }))
+  }
+  expect(playChime).toHaveBeenCalledOnce()
 })
