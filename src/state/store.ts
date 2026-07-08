@@ -26,7 +26,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const [profile, settings] = await Promise.all([repo.loadProfile(), repo.loadSettings()])
       set({ profile, settings, storageOk: true })
-    } catch {
+    } catch (e) {
+      console.warn('mindspark: storage unavailable — starting with in-memory defaults', e)
       set({ profile: structuredClone(repo.DEFAULT_PROFILE), settings: structuredClone(repo.DEFAULT_SETTINGS), storageOk: false })
     }
   },
@@ -52,7 +53,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       try {
         await repo.addSession({ ...result, playedAt: now.toISOString() })
         await repo.saveProfile(profile)
-      } catch {
+      } catch (e) {
+        console.warn('mindspark: session persist failed — storage marked unavailable', e)
         set({ storageOk: false })
       }
     }
@@ -60,12 +62,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   async updateSettings(patch) {
     if (!get().settings) await get().init() // init guarantees non-null settings afterward
-    const settings: SettingsRow = { ...get().settings!, ...patch }
+    const clamped = { ...patch }
+    if (clamped.wordsPerDay != null) {
+      clamped.wordsPerDay = Math.min(25, Math.max(5, Math.round(clamped.wordsPerDay)))
+    }
+    const settings: SettingsRow = { ...get().settings!, ...clamped }
     set({ settings })
     if (get().storageOk) {
       try {
         await repo.saveSettings(settings)
-      } catch {
+      } catch (e) {
+        console.warn('mindspark: settings persist failed — running in-memory', e)
         set({ storageOk: false })
       }
     }

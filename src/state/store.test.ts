@@ -68,3 +68,10 @@ it('a mid-run write failure resolves gracefully and flips storageOk', async () =
   expect(useAppStore.getState().storageOk).toBe(false)
   expect(useAppStore.getState().profile?.skillScores.math).toBe(80) // optimistic state kept
 })
+
+it('clamps wordsPerDay to 5–25', async () => {
+  await useAppStore.getState().updateSettings({ wordsPerDay: 99 })
+  expect(useAppStore.getState().settings?.wordsPerDay).toBe(25)
+  await useAppStore.getState().updateSettings({ wordsPerDay: 1 })
+  expect(useAppStore.getState().settings?.wordsPerDay).toBe(5)
+})
