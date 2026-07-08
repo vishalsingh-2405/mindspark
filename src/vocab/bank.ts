@@ -18,7 +18,7 @@ const cache = new Map<VocabTier, TierBank>()
 export async function loadTier(tier: VocabTier): Promise<TierBank> {
   const hit = cache.get(tier)
   if (hit) return hit
-  const res = await fetch(`/data/vocab/${tier}.json`)
+  const res = await fetch(`${import.meta.env.BASE_URL}data/vocab/${tier}.json`)
   if (!res.ok) throw new Error(`vocab shard ${tier} failed: ${res.status}`)
   const entries = (await res.json()) as VocabEntry[]
   const bank: TierBank = { entries, byId: new Map(entries.map(e => [e.id, e])) }

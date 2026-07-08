@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </button>
           {/* Nav is hidden on /play — a deterministic crash needs an escape besides "Try again".
               Plain anchor: a full reload is fine (arguably desirable) after a crash. */}
-          <a className="neon-btn neon-btn--lime" href="/" style={{ marginLeft: 10, display: 'inline-block' }}>
+          <a className="neon-btn neon-btn--lime" href={import.meta.env.BASE_URL} style={{ marginLeft: 10, display: 'inline-block' }}>
             Home
           </a>
         </div>
