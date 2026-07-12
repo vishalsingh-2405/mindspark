@@ -6,6 +6,7 @@ vi.mock('../../audio/sfx', () => ({
   playBuzz: vi.fn(),
   playTick: vi.fn(),
   playChime: vi.fn(),
+  playCombo: vi.fn(),
 }))
 import { playBlip, playBuzz, playChime } from '../../audio/sfx'
 
@@ -95,6 +96,16 @@ it('plays blip on correct and buzz on wrong', () => {
   expect(playBlip).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen(container).wrong) }))
   expect(playBuzz).toHaveBeenCalledOnce()
+})
+
+it('flashes data-feedback: hit on correct, miss on wrong', () => {
+  const { container } = render(<PatternBreak difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.pattern-break')!
+  expect(root).not.toHaveAttribute('data-feedback')
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen(container).correct) }))
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen(container).wrong) }))
+  expect(root).toHaveAttribute('data-feedback', 'miss')
 })
 
 it('plays chime on level-up (3 consecutive correct)', () => {
