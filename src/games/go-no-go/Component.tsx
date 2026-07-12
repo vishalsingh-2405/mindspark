@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
+import { playBlip, playBuzz, playChime, playCombo, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { gngConfig, judge, nextStimulus, toScore, type Stimulus } from './logic'
 
@@ -16,6 +17,7 @@ export function GoNoGo({ difficulty, onFinish }: GameProps) {
   const [stim, setStim] = useState<Stimulus | null>(null) // null = blank gap between stimuli
   const { msLeft: timeLeft } = useCountdown(ROUND_MS, ROUND_MS) // fixed round: no time bonus, pace is the mechanic
   const [combo, setCombo] = useState(0)
+  const [feedback, flash] = useFeedback()
   const statsRef = useRef({ correct: 0, total: 0, goMs: 0, goTaps: 0, peak: difficulty, correctPeak: 0, shownAt: 0 })
   const adaptiveRef = useRef<AdaptiveState>({ level: difficulty, correctRun: 0, missRun: 0 })
   const stimRef = useRef<Stimulus | null>(null)
@@ -45,6 +47,10 @@ export function GoNoGo({ difficulty, onFinish }: GameProps) {
       const correct = judge(isGo, tapped)
       if (correct) playBlip() // doubles as the soft cue for a correctly withheld red
       else playBuzz()
+      // Vignette only where attention belongs: hit on a tapped green, miss on commission/omission.
+      // A quiet red expiry stays quiet — flashing every stimulus would be noise.
+      if (correct && tapped) flash('hit')
+      else if (!correct) flash('miss')
       s.total += 1
       if (correct) {
         s.correct += 1
@@ -61,7 +67,11 @@ export function GoNoGo({ difficulty, onFinish }: GameProps) {
       s.peak = Math.max(s.peak, next.level)
       adaptiveRef.current = next
       setAdaptive(next)
-      setCombo(c => (correct ? c + 1 : 0))
+      setCombo(c => {
+        const nextCombo = correct ? c + 1 : 0
+        if (nextCombo > 0 && nextCombo % 5 === 0) playCombo(nextCombo / 5)
+        return nextCombo
+      })
       setStim(null) // straight into the gap
       timeoutRef.current = setTimeout(showNext, GAP_MS)
     }
@@ -69,7 +79,7 @@ export function GoNoGo({ difficulty, onFinish }: GameProps) {
     resolveRef.current = resolve
     timeoutRef.current = setTimeout(showNext, GAP_MS) // lead-in gap so stimulus 1 lands after first paint
     return () => clearTimeout(timeoutRef.current) // only one timeout is ever pending
-  }, [rng])
+  }, [rng, flash])
 
   const secLeft = Math.max(0, Math.ceil(timeLeft / 1000))
   useEffect(() => {
@@ -100,11 +110,13 @@ export function GoNoGo({ difficulty, onFinish }: GameProps) {
   }
 
   return (
-    <div className="game go-no-go">
+    <div className="game go-no-go" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{Math.max(0, Math.ceil(timeLeft / 1000))}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
-        {combo > 1 ? <span className="hud__combo" aria-hidden="true">×{combo}</span> : <span />}
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
+        {combo > 1
+          ? <span className={combo % 5 === 0 ? 'hud__combo hud__combo--milestone' : 'hud__combo'} key={combo} aria-hidden="true">×{combo}</span>
+          : <span />}
       </div>
       <button
         type="button"

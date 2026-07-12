@@ -6,6 +6,7 @@ vi.mock('../../audio/sfx', () => ({
   playBuzz: vi.fn(),
   playTick: vi.fn(),
   playChime: vi.fn(),
+  playCombo: vi.fn(),
 }))
 import { playBlip, playBuzz } from '../../audio/sfx'
 
@@ -71,6 +72,44 @@ it('tapping a no-go is a miss: buzz, stimulus ends immediately', () => {
   expect(playBuzz).toHaveBeenCalledOnce()
   expect(playBlip).not.toHaveBeenCalled()
   expect(container.querySelector('.go-no-go__stim')).toBeNull()
+})
+
+it('flashes hit feedback on a correct go tap', () => {
+  vi.useFakeTimers()
+  const { container } = render(<GoNoGo difficulty={1} onFinish={() => {}} />)
+  findStim(container, 'go')
+  fireEvent.click(stage(container))
+  expect(container.querySelector('.game')).toHaveAttribute('data-feedback', 'hit')
+})
+
+it('flashes miss feedback on a commission (no-go tapped)', () => {
+  vi.useFakeTimers()
+  const { container } = render(<GoNoGo difficulty={1} onFinish={() => {}} />)
+  findStim(container, 'no')
+  fireEvent.click(stage(container))
+  expect(container.querySelector('.game')).toHaveAttribute('data-feedback', 'miss')
+})
+
+it('flashes miss feedback on an omission (go expired untapped)', () => {
+  vi.useFakeTimers()
+  const { container } = render(<GoNoGo difficulty={1} onFinish={() => {}} />)
+  findStim(container, 'go')
+  for (let i = 0; i < 40 && container.querySelector('.go-no-go__stim--go'); i++) {
+    act(() => { vi.advanceTimersByTime(25) })
+  }
+  expect(container.querySelector('.go-no-go__stim--go')).toBeNull()
+  expect(container.querySelector('.game')).toHaveAttribute('data-feedback', 'miss')
+})
+
+it('stays visually quiet on a correct no-go expiry: no feedback flash', () => {
+  vi.useFakeTimers()
+  const { container } = render(<GoNoGo difficulty={1} onFinish={() => {}} />)
+  findStim(container, 'no')
+  for (let i = 0; i < 40 && container.querySelector('.go-no-go__stim--no'); i++) {
+    act(() => { vi.advanceTimersByTime(25) })
+  }
+  expect(container.querySelector('.go-no-go__stim--no')).toBeNull()
+  expect(container.querySelector('.game')).not.toHaveAttribute('data-feedback')
 })
 
 it('ignores taps during the blank gap', () => {
