@@ -32,3 +32,5 @@ Gotchas:
 - Collect `page.on('pageerror')` and console errors — the run should produce **none**.
 - After playing, `/mindspark/games` tiles show `Best N · Last N` and Home shows the Brain Score dial — that proves session recording + scoring integration.
 - Sessions persist in IndexedDB per browser context; a fresh context = fresh profile.
+- Premium-feel assertions: game roots flash `data-feedback="hit"|"miss"` on answers (auto-clears ~350 ms); `.hud__timer--low` appears in the last 5 s; ResultsCard score counts up inside `.results__ring` and `.results__ribbon` ("NEW BEST") appears only when a prior best is beaten — play a game badly once, then well, to trigger it.
+- Settings sheet opens via the ⚙ button on Home; toggling "Reduced motion" adds `.reduced-motion` to `<html>` immediately and persists across reload (count-ups snap instantly when set).
