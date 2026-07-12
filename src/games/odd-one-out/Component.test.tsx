@@ -7,8 +7,9 @@ vi.mock('../../audio/sfx', () => ({
   playBuzz: vi.fn(),
   playTick: vi.fn(),
   playChime: vi.fn(),
+  playCombo: vi.fn(),
 }))
-import { playBlip, playBuzz, playChime } from '../../audio/sfx'
+import { playBlip, playBuzz, playChime, playCombo } from '../../audio/sfx'
 
 afterEach(() => vi.useRealTimers())
 beforeEach(() => vi.clearAllMocks())
@@ -138,6 +139,24 @@ it('plays blip on correct and buzz on wrong', () => {
   expect(playBlip).toHaveBeenCalledOnce()
   fireEvent.click(findOddOnScreen().other)
   expect(playBuzz).toHaveBeenCalledOnce()
+})
+
+it('flashes data-feedback hit on correct and miss on wrong', () => {
+  const { container } = render(<OddOneOut difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.game')!
+  expect(root).not.toHaveAttribute('data-feedback')
+  fireEvent.click(findOddOnScreen().odd)
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+  fireEvent.click(findOddOnScreen().other)
+  expect(root).toHaveAttribute('data-feedback', 'miss')
+})
+
+it('plays the combo milestone sound at 5 consecutive correct', () => {
+  render(<OddOneOut difficulty={1} onFinish={() => {}} />)
+  for (let i = 0; i < 5; i++) {
+    fireEvent.click(findOddOnScreen().odd)
+  }
+  expect(playCombo).toHaveBeenCalledExactlyOnceWith(1)
 })
 
 it('plays chime on level-up (3 consecutive correct)', () => {
