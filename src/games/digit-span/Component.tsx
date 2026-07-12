@@ -3,6 +3,7 @@ import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { checkEntry, FULL_MS_PER_DIGIT, makeDigits, spanConfig, toScore, ZERO_MS_PER_DIGIT } from './logic'
 
@@ -34,6 +35,7 @@ export function DigitSpan({ difficulty, onFinish }: GameProps) {
   const [entry, setEntry] = useState('')
   const [lastCorrect, setLastCorrect] = useState(false)
   const [combo, setCombo] = useState(0)
+  const [feedback, flash] = useFeedback()
   const { msLeft: timeLeft } = useCountdown(RUN_MS, RUN_MS)
   const statsRef = useRef({
     correct: 0,
@@ -114,6 +116,7 @@ export function DigitSpan({ difficulty, onFinish }: GameProps) {
     const correct = checkEntry(round.target, finalEntry)
     if (correct) playBlip()
     else playBuzz()
+    flash(correct ? 'hit' : 'miss')
     s.total += 1
     if (correct) {
       s.correct += 1
@@ -145,11 +148,11 @@ export function DigitSpan({ difficulty, onFinish }: GameProps) {
   }
 
   return (
-    <div className="game digit-span">
+    <div className="game digit-span" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{secLeft}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
-        {combo > 1 ? <span className="hud__combo" aria-hidden="true">×{combo}</span> : <span />}
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
+        {combo > 1 ? <span className="hud__combo" key={combo} aria-hidden="true">×{combo}</span> : <span />}
       </div>
       {phase === 'show' && (
         <div className="digit-span__digit" aria-live="polite">

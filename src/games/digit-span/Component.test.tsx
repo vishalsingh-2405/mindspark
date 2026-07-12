@@ -100,6 +100,29 @@ it('an idle run (no entries) scores 0', () => {
   expect(onFinish.mock.calls[0][0].score).toBe(0)
 })
 
+it('flashes hit feedback on a correct entry and miss on a wrong one', () => {
+  vi.useFakeTimers()
+  const { container } = render(<DigitSpan difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.game.digit-span')!
+  expect(root.getAttribute('data-feedback')).toBeNull()
+  const digits = watchDigits(container, L1_LENGTH, L1_SHOW_MS)
+  typeEntry(digits) // correct entry auto-submits
+  expect(root.getAttribute('data-feedback')).toBe('hit')
+  act(() => { vi.advanceTimersByTime(FEEDBACK_MS) }) // feedback flash clears (350 ms) within the verdict pause
+  expect(root.getAttribute('data-feedback')).toBeNull()
+  const digits2 = watchDigits(container, L1_LENGTH, L1_SHOW_MS)
+  typeEntry(digits2, d => String((Number(d) + 1) % 10)) // every digit off by one
+  expect(root.getAttribute('data-feedback')).toBe('miss')
+})
+
+it('marks the timer urgent in the last 5 seconds', () => {
+  vi.useFakeTimers()
+  const { container } = render(<DigitSpan difficulty={1} onFinish={() => {}} />)
+  expect(container.querySelector('.hud__timer--low')).toBeNull()
+  act(() => { vi.advanceTimersByTime(56_000) })
+  expect(container.querySelector('.hud__timer--low')).not.toBeNull()
+})
+
 it('plays chime on level-up (3 consecutive correct rounds)', () => {
   vi.useFakeTimers()
   const { container } = render(<DigitSpan difficulty={1} onFinish={() => {}} />)
