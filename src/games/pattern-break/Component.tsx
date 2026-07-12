@@ -1,0 +1,99 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
+import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
+import { createRng } from '../../lib/rng'
+import { useCountdown } from '../../lib/useCountdown'
+import type { GameProps } from '../types'
+import { generateSequence, toScore, type Sequence } from './logic'
+
+const ROUND_MS = 60_000
+
+export function PatternBreak({ difficulty, onFinish }: GameProps) {
+  // eslint-disable-next-line react-hooks/purity -- intentional: seed the RNG from wall-clock time once per mount
+  const rng = useMemo(() => createRng(Date.now() % 2 ** 31), [])
+  const [adaptive, setAdaptive] = useState<AdaptiveState>({ level: difficulty, correctRun: 0, missRun: 0 })
+  const [seq, setSeq] = useState<Sequence>(() => generateSequence(difficulty, rng))
+  const [seqIndex, setSeqIndex] = useState(0)
+  const { msLeft: timeLeft } = useCountdown(ROUND_MS, ROUND_MS) // fixed 60 s round — no time bonuses
+  const [combo, setCombo] = useState(0)
+  const statsRef = useRef({
+    correct: 0,
+    total: 0,
+    correctMs: 0,
+    peak: difficulty,
+    correctPeak: 0,
+    // eslint-disable-next-line react-hooks/purity -- placeholder value, overwritten by the mount effect below before any answer can occur
+    askedAt: performance.now(),
+  })
+  const doneRef = useRef(false)
+
+  // sequence 1's clock starts at first paint, not at render start
+  useEffect(() => {
+    statsRef.current.askedAt = performance.now()
+  }, [])
+
+  const secLeft = Math.max(0, Math.ceil(timeLeft / 1000))
+  useEffect(() => {
+    if (secLeft > 0 && secLeft <= 3 && !doneRef.current) playTick()
+  }, [secLeft])
+
+  useEffect(() => {
+    if (timeLeft > 0 || doneRef.current) return
+    doneRef.current = true
+    const s = statsRef.current
+    const accuracy = s.total ? s.correct / s.total : 0
+    const avgMs = s.correct ? s.correctMs / s.correct : 0 // speed measured on correct answers only
+    onFinish({
+      gameId: 'pattern-break',
+      skill: 'logic',
+      // score reflects demonstrated skill: no correct answers → correctPeak 0 → score 0
+      score: toScore({ difficultyReached: s.correctPeak, accuracy, avgMs }),
+      difficultyReached: s.peak, // actual peak still reported for next-session level resume
+      accuracy,
+      avgMs,
+    })
+  }, [timeLeft, onFinish])
+
+  function answer(choice: number) {
+    if (doneRef.current) return
+    const s = statsRef.current
+    const correct = choice === seq.answer
+    if (correct) playBlip()
+    else playBuzz()
+    s.total += 1
+    if (correct) {
+      s.correct += 1
+      // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
+      s.correctMs += performance.now() - s.askedAt
+      // level of the sequence just answered — difficulty must be demonstrated, not merely visited
+      s.correctPeak = Math.max(s.correctPeak, adaptive.level)
+    }
+    const next = stepAdaptive(adaptive, correct)
+    if (next.level > adaptive.level) playChime()
+    s.peak = Math.max(s.peak, next.level)
+    // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
+    s.askedAt = performance.now()
+    setAdaptive(next)
+    setCombo(c => (correct ? c + 1 : 0))
+    setSeq(generateSequence(next.level, rng))
+    setSeqIndex(i => i + 1)
+  }
+
+  return (
+    <div className="game pattern-break">
+      <div className="hud">
+        <span className="hud__timer">{Math.max(0, Math.ceil(timeLeft / 1000))}s</span>
+        <span className="hud__level">Lv {adaptive.level}</span>
+        {combo > 1 ? <span className="hud__combo" aria-hidden="true">×{combo}</span> : <span />}
+      </div>
+      <div className="pattern-break__seq" aria-live="polite">{`${seq.terms.join(' · ')} · ?`}</div>
+      <div className="pattern-break__choices">
+        {seq.choices.map(c => (
+          <button type="button" key={`${seqIndex}-${c}`} className="choice" onClick={() => answer(c)}>
+            {c}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
