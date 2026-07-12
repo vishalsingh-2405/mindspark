@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
+import { playBlip, playBuzz, playChime, playCombo, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { generateQuestion, toScore, type Question } from './logic'
 
@@ -18,6 +19,7 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
   const [questionIndex, setQuestionIndex] = useState(0)
   const { msLeft: timeLeft, addTime } = useCountdown(ROUND_MS, MAX_MS)
   const [combo, setCombo] = useState(0)
+  const [feedback, flash] = useFeedback()
   const statsRef = useRef({
     correct: 0,
     total: 0,
@@ -62,6 +64,7 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     const correct = choice === question.answer
     if (correct) playBlip()
     else playBuzz()
+    flash(correct ? 'hit' : 'miss')
     s.total += 1
     if (correct) {
       s.correct += 1
@@ -76,18 +79,24 @@ export function QuickMath({ difficulty, onFinish }: GameProps) {
     // eslint-disable-next-line react-hooks/purity -- answer() only runs from the onClick handler, never during render
     s.askedAt = performance.now()
     setAdaptive(next)
-    setCombo(c => (correct ? c + 1 : 0))
+    setCombo(c => {
+      const next = correct ? c + 1 : 0
+      if (next > 0 && next % 5 === 0) playCombo(next / 5)
+      return next
+    })
     if (correct) addTime(BONUS_MS)
     setQuestion(generateQuestion(next.level, rng))
     setQuestionIndex(i => i + 1)
   }
 
   return (
-    <div className="game quick-math">
+    <div className="game quick-math" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{Math.max(0, Math.ceil(timeLeft / 1000))}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
-        {combo > 1 ? <span className="hud__combo" aria-hidden="true">×{combo}</span> : <span />}
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
+        {combo > 1
+          ? <span className={combo % 5 === 0 ? 'hud__combo hud__combo--milestone' : 'hud__combo'} key={combo} aria-hidden="true">×{combo}</span>
+          : <span />}
       </div>
       <div className="quick-math__q" aria-live="polite">{question.text}</div>
       <div className="quick-math__choices">

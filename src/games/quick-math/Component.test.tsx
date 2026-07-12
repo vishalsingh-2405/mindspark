@@ -6,6 +6,7 @@ vi.mock('../../audio/sfx', () => ({
   playBuzz: vi.fn(),
   playTick: vi.fn(),
   playChime: vi.fn(),
+  playCombo: vi.fn(),
 }))
 import { playBlip, playBuzz, playChime } from '../../audio/sfx'
 
@@ -93,6 +94,16 @@ it('plays blip on correct and buzz on wrong', () => {
   expect(playBlip).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().wrong) }))
   expect(playBuzz).toHaveBeenCalledOnce()
+})
+
+it('flashes hit feedback on a correct answer and miss on a wrong one', () => {
+  const { container } = render(<QuickMath difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.game.quick-math')!
+  expect(root).not.toHaveAttribute('data-feedback')
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().correct) }))
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+  fireEvent.click(screen.getByRole('button', { name: String(solveOnScreen().wrong) }))
+  expect(root).toHaveAttribute('data-feedback', 'miss')
 })
 
 it('plays chime on level-up (3 consecutive correct)', () => {
