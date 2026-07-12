@@ -7,7 +7,7 @@ import { useVocabStore } from '../state/vocabStore'
 import { clearBankCache } from '../vocab/bank'
 import { Vocab } from './Vocab'
 
-vi.mock('../audio/sfx', () => ({ playBlip: vi.fn(), playBuzz: vi.fn(), playTick: vi.fn(), playChime: vi.fn() }))
+vi.mock('../audio/sfx', () => ({ playBlip: vi.fn(), playBuzz: vi.fn(), playTick: vi.fn(), playChime: vi.fn(), playTap: vi.fn() }))
 import { playChime } from '../audio/sfx'
 
 const SHARD = Array.from({ length: 12 }, (_, i) => ({

@@ -1,3 +1,4 @@
+import { playTap } from '../audio/sfx'
 import type { VocabEntry } from './bank'
 
 interface Props {
@@ -14,7 +15,7 @@ export function FlipCard({ entry, mode, flipped, onFlip }: Props) {
     <button
       type="button"
       className={`flip-card${flipped ? ' is-flipped' : ''}`}
-      onClick={onFlip}
+      onClick={() => { playTap(); onFlip() }}
       aria-label={flipped ? 'card revealed' : 'tap to reveal'}
       disabled={flipped}
     >

@@ -4,14 +4,14 @@ import { ResultsCard } from '../components/ResultsCard'
 import { getGame } from '../games/registry'
 import type { GameResult } from '../games/types'
 import { useAppStore } from '../state/store'
-import { getGameLevel, lastSessionFor, setGameLevel } from '../storage/repos'
+import { bestScoreFor, getGameLevel, lastSessionFor, setGameLevel } from '../storage/repos'
 
 export function GamePlay() {
   const { gameId = '' } = useParams()
   const game = getGame(gameId)
   const recordSession = useAppStore(s => s.recordSession)
   const [startLevel, setStartLevel] = useState<number | null>(null)
-  const [outcome, setOutcome] = useState<{ score: number; delta: number | null } | null>(null)
+  const [outcome, setOutcome] = useState<{ score: number; delta: number | null; newBest: boolean } | null>(null)
   const [runKey, setRunKey] = useState(0)
   const finishedRef = useRef(false)
 
@@ -32,10 +32,19 @@ export function GamePlay() {
     // typo'd gameId/skill must not silently orphan its sessions.
     const stamped = { ...result, gameId: game.id, skill: game.skill }
     // Every step tolerates storage failure — the ResultsCard must always appear.
-    const last = await lastSessionFor(game.id).catch(() => undefined)
+    // best is read BEFORE recordSession so this run can't compete with itself;
+    // a first-ever run (best undefined) is a baseline, never a NEW BEST.
+    const [last, best] = await Promise.all([
+      lastSessionFor(game.id).catch(() => undefined),
+      bestScoreFor(game.id).catch(() => undefined),
+    ])
     await recordSession(stamped) // resolves even on storage failure, by design
     await setGameLevel(game.id, stamped.difficultyReached).catch(() => {})
-    setOutcome({ score: stamped.score, delta: last ? stamped.score - last.score : null })
+    setOutcome({
+      score: stamped.score,
+      delta: last ? stamped.score - last.score : null,
+      newBest: best !== undefined && stamped.score > best,
+    })
   }
 
   if (!game) return <Navigate to="/games" replace />
@@ -46,6 +55,7 @@ export function GamePlay() {
       <ResultsCard
         score={outcome.score}
         delta={outcome.delta}
+        newBest={outcome.newBest}
         onReplay={() => {
           finishedRef.current = false
           setOutcome(null)

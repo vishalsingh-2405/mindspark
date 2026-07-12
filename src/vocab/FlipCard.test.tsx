@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FlipCard } from './FlipCard'
 
+vi.mock('../audio/sfx', () => ({ playTap: vi.fn() }))
+import { playTap } from '../audio/sfx'
+
 const ENTRY = { id: 'ephemeral', word: 'ephemeral', pos: 'adjective', meaning: 'lasting a very short time', example: 'the ephemeral joys of childhood' }
 
 it('word→meaning: shows the word up front, meaning after flip', async () => {
@@ -11,6 +14,7 @@ it('word→meaning: shows the word up front, meaning after flip', async () => {
   expect(screen.getByText(/tap to reveal/i)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: /reveal/i }))
   expect(onFlip).toHaveBeenCalledOnce()
+  expect(playTap).toHaveBeenCalledOnce()
   rerender(<FlipCard entry={ENTRY} mode="word-to-meaning" flipped={true} onFlip={onFlip} />)
   expect(screen.getByText('lasting a very short time')).toBeInTheDocument()
   expect(screen.getByText(/ephemeral joys/)).toBeInTheDocument()
