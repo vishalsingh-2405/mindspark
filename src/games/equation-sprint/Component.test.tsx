@@ -6,8 +6,9 @@ vi.mock('../../audio/sfx', () => ({
   playBuzz: vi.fn(),
   playTick: vi.fn(),
   playChime: vi.fn(),
+  playCombo: vi.fn(),
 }))
-import { playBlip, playBuzz, playChime } from '../../audio/sfx'
+import { playBlip, playBuzz, playChime, playCombo } from '../../audio/sfx'
 
 afterEach(() => vi.useRealTimers())
 beforeEach(() => vi.clearAllMocks())
@@ -94,4 +95,22 @@ it('plays chime on level-up (3 consecutive correct)', () => {
   render(<EquationSprint difficulty={1} onFinish={() => {}} />)
   for (let i = 0; i < 3; i++) clickCorrect()
   expect(playChime).toHaveBeenCalledOnce()
+})
+
+it('flashes hit on a correct answer and miss on a wrong one via data-feedback', () => {
+  const { container } = render(<EquationSprint difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.game.equation-sprint')!
+  expect(root).not.toHaveAttribute('data-feedback')
+  clickCorrect()
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+  clickWrong()
+  expect(root).toHaveAttribute('data-feedback', 'miss')
+})
+
+it('plays the combo milestone sound at 5 consecutive correct', () => {
+  render(<EquationSprint difficulty={1} onFinish={() => {}} />)
+  for (let i = 0; i < 4; i++) clickCorrect()
+  expect(playCombo).not.toHaveBeenCalled()
+  clickCorrect()
+  expect(playCombo).toHaveBeenCalledWith(1)
 })

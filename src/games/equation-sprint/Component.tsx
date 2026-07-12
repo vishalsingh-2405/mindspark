@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
+import { playBlip, playBuzz, playChime, playCombo, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { generateEquation, toScore, type Equation } from './logic'
 
@@ -15,6 +16,7 @@ export function EquationSprint({ difficulty, onFinish }: GameProps) {
   const [equation, setEquation] = useState<Equation>(() => generateEquation(difficulty, rng))
   const { msLeft: timeLeft } = useCountdown(ROUND_MS, ROUND_MS) // fixed round: no time bonus, pace is the mechanic
   const [combo, setCombo] = useState(0)
+  const [feedback, flash] = useFeedback()
   const statsRef = useRef({
     correct: 0,
     total: 0,
@@ -59,6 +61,7 @@ export function EquationSprint({ difficulty, onFinish }: GameProps) {
     const correct = guess === equation.isTrue
     if (correct) playBlip()
     else playBuzz()
+    flash(correct ? 'hit' : 'miss')
     s.total += 1
     if (correct) {
       s.correct += 1
@@ -71,16 +74,22 @@ export function EquationSprint({ difficulty, onFinish }: GameProps) {
     s.peak = Math.max(s.peak, next.level)
     s.askedAt = performance.now()
     setAdaptive(next)
-    setCombo(c => (correct ? c + 1 : 0))
+    setCombo(c => {
+      const nextCombo = correct ? c + 1 : 0
+      if (nextCombo > 0 && nextCombo % 5 === 0) playCombo(nextCombo / 5)
+      return nextCombo
+    })
     setEquation(generateEquation(next.level, rng))
   }
 
   return (
-    <div className="game equation-sprint">
+    <div className="game equation-sprint" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{Math.max(0, Math.ceil(timeLeft / 1000))}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
-        {combo > 1 ? <span className="hud__combo" aria-hidden="true">×{combo}</span> : <span />}
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
+        {combo > 1
+          ? <span className={combo % 5 === 0 ? 'hud__combo hud__combo--milestone' : 'hud__combo'} key={combo} aria-hidden="true">×{combo}</span>
+          : <span />}
       </div>
       <div className="equation-sprint__q" aria-live="polite">{equation.text}</div>
       <div className="equation-sprint__choices">
