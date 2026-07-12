@@ -23,7 +23,12 @@ export async function saveProfile(p: ProfileRow): Promise<void> {
 
 export async function loadSettings(): Promise<SettingsRow> {
   const row = await db.settings.get('settings')
-  if (row) return row
+  if (row) {
+    // Backfill fields missing from legacy rows (pre-hapticsOn) with defaults.
+    const merged = { ...structuredClone(DEFAULT_SETTINGS), ...row }
+    if (row.hapticsOn == null) await db.settings.put(merged)
+    return merged
+  }
   await db.settings.put(DEFAULT_SETTINGS)
   return structuredClone(DEFAULT_SETTINGS)
 }

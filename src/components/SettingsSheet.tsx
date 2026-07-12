@@ -25,6 +25,12 @@ export function SettingsSheet({ open, onClose }: Props) {
             onChange={e => void updateSettings({ soundOn: e.target.checked })} />
         </label>
 
+        <label className="sheet__row">
+          <span>Haptics</span>
+          <input type="checkbox" checked={settings.hapticsOn}
+            onChange={e => void updateSettings({ hapticsOn: e.target.checked })} />
+        </label>
+
         <label className="sheet__row sheet__row--stack">
           <span>Words per day: {settings.wordsPerDay}</span>
           <input type="range" min={5} max={25} value={settings.wordsPerDay}

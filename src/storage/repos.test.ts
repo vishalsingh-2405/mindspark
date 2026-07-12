@@ -50,6 +50,18 @@ it('persists across a database reopen', async () => {
   expect(await getGameLevel('quick-math')).toBe(7)
 })
 
+it('backfills hapticsOn on legacy settings rows and persists it', async () => {
+  // Legacy row written before the hapticsOn field existed.
+  await db.settings.put({
+    id: 'settings', soundOn: false, wordsPerDay: 15,
+    vocabMode: 'meaning-to-word', reducedMotion: true,
+  } as never)
+  const s = await loadSettings()
+  expect(s.hapticsOn).toBe(true)
+  expect(s.soundOn).toBe(false) // existing values untouched
+  expect((await db.settings.get('settings'))?.hapticsOn).toBe(true) // persisted
+})
+
 it('saveSettings round-trips', async () => {
   const s = await loadSettings()
   await saveSettings({ ...s, soundOn: false, wordsPerDay: 15 })

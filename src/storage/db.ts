@@ -54,6 +54,7 @@ export interface SettingsRow {
   wordsPerDay: number
   vocabMode: 'word-to-meaning' | 'meaning-to-word'
   reducedMotion: boolean
+  hapticsOn: boolean
 }
 
 export interface GameLevelRow {
@@ -80,6 +81,7 @@ export const DEFAULT_SETTINGS: SettingsRow = Object.freeze({
   wordsPerDay: 10,
   vocabMode: 'word-to-meaning',
   reducedMotion: false,
+  hapticsOn: true,
 })
 
 export class MindSparkDB extends Dexie {

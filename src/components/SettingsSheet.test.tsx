@@ -17,6 +17,12 @@ it('toggles sound off through the store', async () => {
   expect(useAppStore.getState().settings?.soundOn).toBe(false)
 })
 
+it('toggles haptics off through the store', async () => {
+  render(<SettingsSheet open onClose={() => {}} />)
+  await userEvent.click(screen.getByRole('checkbox', { name: /haptics/i }))
+  expect(useAppStore.getState().settings?.hapticsOn).toBe(false)
+})
+
 it('renders nothing when closed', () => {
   const { container } = render(<SettingsSheet open={false} onClose={() => {}} />)
   expect(container).toBeEmptyDOMElement()
