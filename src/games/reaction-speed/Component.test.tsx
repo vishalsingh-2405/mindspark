@@ -56,6 +56,23 @@ it('finishes once after 5 clean trials with a plausible result', () => {
   expect(result.score).toBeLessThanOrEqual(100)
 })
 
+it('flashes data-feedback="hit" on the game root after a valid green tap', () => {
+  vi.useFakeTimers()
+  const { container } = render(<ReactionSpeed difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.game')
+  expect(root).not.toHaveAttribute('data-feedback')
+  act(() => { vi.advanceTimersByTime(MAX_DELAY) })
+  fireEvent.click(screen.getByRole('button'))
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+})
+
+it('flashes data-feedback="miss" on the game root after a false start', () => {
+  vi.useFakeTimers()
+  const { container } = render(<ReactionSpeed difficulty={1} onFinish={() => {}} />)
+  fireEvent.click(screen.getByRole('button')) // tap during WAIT
+  expect(container.querySelector('.game')).toHaveAttribute('data-feedback', 'miss')
+})
+
 it('a false start counts against accuracy in the final result', () => {
   vi.useFakeTimers()
   const onFinish = vi.fn()

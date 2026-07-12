@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { playBlip, playBuzz } from '../../audio/sfx'
 import { createRng } from '../../lib/rng'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { FALSE_START_PENALTY_MS, summarize, trialDelay, type Trial } from './logic'
 
@@ -12,6 +13,7 @@ type Phase = 'wait' | 'go' | 'result'
 export function ReactionSpeed({ onFinish }: GameProps) {
   // eslint-disable-next-line react-hooks/purity -- intentional: seed the RNG from wall-clock time once per mount
   const rng = useMemo(() => createRng(Date.now() % 2 ** 31), [])
+  const [feedback, flash] = useFeedback()
   const [phase, setPhase] = useState<Phase>('wait')
   const [trialIndex, setTrialIndex] = useState(0)
   const [lastLabel, setLastLabel] = useState('')
@@ -55,12 +57,14 @@ export function ReactionSpeed({ onFinish }: GameProps) {
     if (doneRef.current) return
     if (phase === 'wait') {
       playBuzz()
+      flash('miss')
       trialsRef.current.push({ ms: FALSE_START_PENALTY_MS, falseStart: true })
       setLastLabel('Too soon!')
       setPhase('result')
     } else if (phase === 'go') {
       const ms = Math.round(performance.now() - goAtRef.current)
       playBlip()
+      flash('hit')
       trialsRef.current.push({ ms, falseStart: false })
       setLastLabel(`${ms} ms`)
       setBest(b => (b === null || ms < b ? ms : b))
@@ -72,9 +76,9 @@ export function ReactionSpeed({ onFinish }: GameProps) {
   const label = phase === 'wait' ? 'WAIT…' : phase === 'go' ? 'TAP!' : lastLabel
 
   return (
-    <div className="game reaction-speed">
+    <div className="game reaction-speed" data-feedback={feedback}>
       <div className="hud">
-        <span>Trial {Math.min(trialIndex + 1, TRIAL_COUNT)}/{TRIAL_COUNT}</span>
+        <span className="hud__combo" key={trialIndex}>Trial {Math.min(trialIndex + 1, TRIAL_COUNT)}/{TRIAL_COUNT}</span>
         <span className="reaction-speed__best">{best !== null ? `Best ${best} ms` : 'Best —'}</span>
       </div>
       <button type="button" className={`reaction-speed__stage reaction-speed__stage--${phase}`} onClick={tap}>
