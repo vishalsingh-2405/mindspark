@@ -18,4 +18,13 @@
   --border-cyan-strong: rgba(0, 240, 255, 0.4);
   --border-cyan-panel: rgba(0, 240, 255, 0.25);
   --magenta-tint: rgba(255, 46, 151, 0.15);
+
+  /* Premium-feel pass */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 120ms;
+  --t-med: 240ms;
+  --t-slow: 400ms;
+  --violet: #9d4dff;
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.45);
 }

@@ -26,17 +26,20 @@ export function AppShell() {
     <div className="app">
       {!storageOk && <div className="banner" role="status">Storage unavailable — progress won't be saved</div>}
       <main className="app__main">
-        {/* key: remount on navigation so a crashed screen's fallback clears when the user switches tabs */}
-        <ErrorBoundary key={pathname}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/games" element={<Games />} />
-            <Route path="/play/:gameId" element={<GamePlay />} />
-            <Route path="/vocab" element={<Vocab />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ErrorBoundary>
+        {/* key: remount on navigation — replays the route-fade entrance and clears a crashed
+            screen's error fallback when the user switches tabs */}
+        <div className="route-fade" key={pathname}>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/games" element={<Games />} />
+              <Route path="/play/:gameId" element={<GamePlay />} />
+              <Route path="/vocab" element={<Vocab />} />
+              <Route path="/stats" element={<Stats />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </div>
       </main>
       {!inGame && <BottomNav />}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { games } from '../games/registry'
 import { bestScoreFor, lastSessionFor } from '../storage/repos'
@@ -31,8 +31,9 @@ export function Games() {
     <div className="screen">
       <h1 className="app-title">GAMES</h1>
       <div className="home__tiles" data-testid="games-grid">
-        {games.map(g => (
-          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}>
+        {games.map((g, i) => (
+          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}
+            style={{ '--i': i } as CSSProperties}>
             <span>{g.name}</span>
             <small>{g.skill}</small>
             <small>

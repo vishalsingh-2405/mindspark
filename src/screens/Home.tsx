@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { RadarChart } from '../components/RadarChart'
 import { ScoreDial } from '../components/ScoreDial'
@@ -17,7 +17,11 @@ export function Home() {
       <h1 className="app-title">MINDSPARK</h1>
       <button type="button" className="home__gear" aria-label="Settings"
         onClick={() => setSettingsOpen(true)}>⚙</button>
-      <ScoreDial score={profile?.brainScore ?? null} />
+      <div className="glow-border">
+        <div className="panel">
+          <ScoreDial score={profile?.brainScore ?? null} />
+        </div>
+      </div>
       <div className="home__streak">
         <span>🔥 {profile?.streak ?? 0}-day streak</span>
         {freezes > 0 && (
@@ -35,8 +39,9 @@ export function Home() {
         <small>10 new words + your reviews — keep the streak alive</small>
       </Link>
       <div className="home__tiles">
-        {quick.map(g => (
-          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}>
+        {quick.map((g, i) => (
+          <Link className="tile" key={g.id} to={g.route ?? `/play/${g.id}`}
+            style={{ '--i': i } as CSSProperties}>
             <span>{g.name}</span>
             <small>{g.skill}</small>
           </Link>
