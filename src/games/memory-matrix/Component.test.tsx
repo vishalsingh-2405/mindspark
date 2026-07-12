@@ -106,6 +106,24 @@ it('plays chime on level-up (3 perfect rounds)', () => {
   expect(screen.getByText(/Lv 2/)).toBeInTheDocument()
 })
 
+it('flashes hit on the root after a perfect round and miss after a wrong pick', () => {
+  vi.useFakeTimers()
+  const { container } = render(<MemoryMatrix difficulty={1} onFinish={() => {}} />)
+  const root = container.querySelector('.memory-matrix')!
+  expect(root).not.toHaveAttribute('data-feedback') // flash-phase start blip must not flash the root
+  const flashed = litCells(container)
+  act(() => { vi.advanceTimersByTime(960) }) // show → input
+  for (const i of flashed) fireEvent.click(cells(container)[i])
+  expect(root).toHaveAttribute('data-feedback', 'hit')
+  act(() => { vi.advanceTimersByTime(700) }) // feedback clears (350ms), next round flashes
+  expect(root).not.toHaveAttribute('data-feedback')
+  const flashed2 = litCells(container)
+  act(() => { vi.advanceTimersByTime(960) })
+  const wrong = cells(container).map((_, i) => i).filter(i => !flashed2.includes(i)).slice(0, 3)
+  for (const i of wrong) fireEvent.click(cells(container)[i])
+  expect(root).toHaveAttribute('data-feedback', 'miss')
+})
+
 it('an idle run (no input) finishes once and scores 0', () => {
   vi.useFakeTimers()
   const onFinish = vi.fn()

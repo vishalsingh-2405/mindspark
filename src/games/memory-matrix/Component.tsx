@@ -3,6 +3,7 @@ import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { isPerfect, matrixConfig, pickCells, toScore, type MatrixConfig } from './logic'
 
@@ -20,6 +21,7 @@ export function MemoryMatrix({ difficulty, onFinish }: GameProps) {
   const [picks, setPicks] = useState<number[]>([])
   const [phase, setPhase] = useState<Phase>('show')
   const [round, setRound] = useState(0)
+  const [feedback, flash] = useFeedback()
   const { msLeft: timeLeft } = useCountdown(RUN_MS, RUN_MS)
   const statsRef = useRef({
     rounds: 0,
@@ -89,6 +91,7 @@ export function MemoryMatrix({ difficulty, onFinish }: GameProps) {
     const correct = isPerfect(target, finalPicks)
     if (correct) playBlip()
     else playBuzz()
+    flash(correct ? 'hit' : 'miss')
     s.rounds += 1
     if (correct) {
       s.perfect += 1
@@ -138,11 +141,11 @@ export function MemoryMatrix({ difficulty, onFinish }: GameProps) {
     : 'Not quite'
 
   return (
-    <div className="game memory-matrix">
+    <div className="game memory-matrix" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{secLeft}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
-        <span className="hud__combo">R{round + 1}</span>
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
+        <span className="hud__combo" key={round + 1}>R{round + 1}</span>
       </div>
       <p className="memory-matrix__prompt" aria-live="polite">{prompt}</p>
       <div
