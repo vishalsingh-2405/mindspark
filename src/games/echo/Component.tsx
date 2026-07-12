@@ -3,6 +3,7 @@ import { playBlip, playBuzz, playChime, playTick } from '../../audio/sfx'
 import { stepAdaptive, type AdaptiveState } from '../../lib/adaptive'
 import { createRng } from '../../lib/rng'
 import { useCountdown } from '../../lib/useCountdown'
+import { useFeedback } from '../../lib/useFeedback'
 import type { GameProps } from '../types'
 import { echoConfig, makeSequence, toScore } from './logic'
 
@@ -30,6 +31,7 @@ export function Echo({ difficulty, onFinish }: GameProps) {
   const [inputPos, setInputPos] = useState(0)
   const [lastPerfect, setLastPerfect] = useState(false)
   const { msLeft: timeLeft } = useCountdown(RUN_MS, RUN_MS)
+  const [feedback, flash] = useFeedback()
   const statsRef = useRef({
     rounds: 0,
     perfect: 0,
@@ -115,6 +117,7 @@ export function Echo({ difficulty, onFinish }: GameProps) {
     const next = stepAdaptive(adaptive, perfect)
     if (next.level > adaptive.level) playChime()
     s.peak = Math.max(s.peak, next.level)
+    flash(perfect ? 'hit' : 'miss') // round resolution only — playback/input blips stay quiet
     setAdaptive(next)
     setLastPerfect(perfect)
     setPhase('feedback')
@@ -142,10 +145,10 @@ export function Echo({ difficulty, onFinish }: GameProps) {
   const statusMod = phase === 'feedback' ? (lastPerfect ? ' echo__status--hit' : ' echo__status--miss') : ''
 
   return (
-    <div className="game echo">
+    <div className="game echo" data-feedback={feedback}>
       <div className="hud">
-        <span className="hud__timer">{secLeft}s</span>
-        <span className="hud__level">Lv {adaptive.level}</span>
+        <span className={secLeft <= 5 ? 'hud__timer hud__timer--low' : 'hud__timer'}>{secLeft}s</span>
+        <span className="hud__level" key={adaptive.level}>Lv {adaptive.level}</span>
         <span />
       </div>
       <div className={`echo__status${statusMod}`} aria-live="polite">{status}</div>
